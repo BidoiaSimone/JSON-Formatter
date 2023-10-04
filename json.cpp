@@ -418,6 +418,7 @@ struct json::const_dictionary_iterator{
     pointer operator->() const{
         return &m_ptr->info;
     }
+
     const_dictionary_iterator& operator++(){
         const_dictionary_iterator temp = m_ptr->next;
         return temp;
@@ -576,43 +577,43 @@ void json::set_dictionary(){
     pimpl->null = false;
 }
 
-void json::push_front(json const& x){
-    if(is_list()){
-        if(pimpl->list_head == nullptr){    //if the list is empty
+void json::push_front(json const& x) {
+    if (is_list()) {
+        if (pimpl->list_head == nullptr) { // If the list is empty
             pimpl->list_head = new impl::list;
             pimpl->list_head->info = x;
             pimpl->list_head->next = nullptr;
             pimpl->list_tail = pimpl->list_head;
-            pimpl->list_tail->next = nullptr;
-        }else{                              //if the list is NOT empty
-            impl::pl temp = new impl::list;
+        } else { // If the list is NOT empty
+            impl::list* temp = new impl::list; // Corrected declaration
             temp->info = x;
             temp->next = pimpl->list_head;
             pimpl->list_head = temp;
         }
-    }else{
+    } else {
         throw json_exception{"at: push_front: obj is not a list"};
     }
 }
 
-void json::push_back(json const& x){
-    if(is_list()){
-        if(pimpl->list_head == nullptr){
+void json::push_back(json const& x) {
+    if (is_list()) {
+        if (pimpl->list_head == nullptr) {
             pimpl->list_head = new impl::list;
             pimpl->list_head->info = x;
             pimpl->list_head->next = nullptr;
             pimpl->list_tail = pimpl->list_head;
-            pimpl->list_tail->next = nullptr;
-        }else{
-            pimpl->list_tail = pimpl->list_tail->next;
-            pimpl->list_tail = new impl::list;
-            pimpl->list_tail->info = x;
-            pimpl->list_tail->next = nullptr;
+        } else {
+            impl::list* newNode = new impl::list;
+            newNode->info = x;
+            newNode->next = nullptr;
+            pimpl->list_tail->next = newNode; // Connect the new node to the end of the list
+            pimpl->list_tail = newNode; // Update list_tail to point to the new node
         }
-    }else{
+    } else {
         throw json_exception{"at: push_back: obj is not a list"};
     }
 }
+
 
 void json::insert(std::pair<std::string, json> const& x){
     if(is_dictionary()){
@@ -988,13 +989,5 @@ int main(){
 
 
 
-/* rifai push back per lista, ricorsiva perchè non credo funzioni e non ho la testa alle 18:05
-di controllare se funziona, file sembra leggere e fare il parsing correttamente ma 
-quando dovrebbe stampare
-stampa solo il primo elemento della lista, indipendentemente da cosa sono gli altri 
-infatti il dizionario viene letto e stampato correttamente
-
-se metto lista dentro a dizionario stampa tutto il dizionario in ordine inverso
-e dove c'era la lista stampa solo "false"*/
-
-/*I think the iterators don't work, erasing them and doing them from the start*/
+/*iterators don't work, the const iterators can't be incremented so they never
+point to the next item in the list or dictionary*/
