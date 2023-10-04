@@ -29,7 +29,7 @@ struct json::impl{
     void LIST(std::istream& lhs, json& rhs);
     void DICT(std::istream& lhs, json& rhs);
 
-    void LIST_PRINT(std::ostream& lhs, json const& rhs);
+    void LIST_PRINT(std::ostream& lhs, json const& rhs);//is required const for the output and input signatures
     void DICT_PRINT(std::ostream& lhs, json const& rhs);
 
 
@@ -272,6 +272,8 @@ json::list_iterator json::begin_list(){     //ritorna un iteratore all'inizio di
     if(is_list()){
         json::list_iterator it(this->pimpl->list_head);
         return it;
+    }else{
+        throw json_exception{"at: begin_list: json is not a list"};
     }
 }
 
@@ -279,11 +281,184 @@ json::list_iterator json::end_list(){
     if(is_list()){
         json::list_iterator it(nullptr);
         return it;
+    }else{
+        throw json_exception{"at: end_list: json is not a list"};
+    }
+}
+
+struct json::dictionary_iterator{
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = std::pair<std::string, json>;
+    using pointer = std::pair<std::string, json>*;
+    using reference = std::pair<std::string, json>&;
+
+    dictionary_iterator(json::impl::dict* ptr) : m_ptr(ptr) {}
+
+    reference operator*() const{
+        return m_ptr->info;
+    }
+
+    pointer operator->() const{
+        return &m_ptr->info;
+    }
+
+    dictionary_iterator& operator++(){
+        m_ptr = m_ptr->next;
+        return *this;
+    }
+
+    dictionary_iterator operator++(int dummy){
+        dictionary_iterator temp = *this;
+        ++(*this);
+        return temp;
+    }
+
+    bool operator==(dictionary_iterator const& rhs) const{
+        return m_ptr == rhs.m_ptr;
+    }
+
+    bool operator!=(dictionary_iterator const& rhs) const{
+        return !(*this == rhs);
+    }
+
+    private:
+        json::impl::dict* m_ptr; 
+};
+
+json::dictionary_iterator json::begin_dictionary(){     //ritorna un iteratore all'inizio di una lista
+    if(is_dictionary()){
+        json::dictionary_iterator it(this->pimpl->dict_head);
+        return it;
+    }else{
+        throw json_exception{"at: begin_dict: json is not a dict"};
+    }
+}
+
+json::dictionary_iterator json::end_dictionary(){
+    if(is_dictionary()){
+        json::dictionary_iterator it(nullptr);
+        return it;
+    }else{
+        throw json_exception{"at: end_dict: json is not a dict"};
     }
 }
 
 
+struct json::const_list_iterator{
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = const json;
+    using pointer = json const*;
+    using reference = json const&;
 
+    const_list_iterator(json::impl::list* ptr) : m_ptr(ptr) {}
+
+    reference operator*() const{
+        return m_ptr->info;
+    }
+
+    pointer operator->() const{
+        return &m_ptr->info;
+    }
+
+    const_list_iterator& operator++(){
+        const_list_iterator temp = m_ptr->next;
+        return temp;
+    }
+/*
+    const_list_iterator operator++(int dummy){          //does it make sense in a const iterator?
+        const_list_iterator temp = *this;
+        ++(*this);
+        return temp;
+    }
+*/
+    bool operator==(const_list_iterator const& rhs) const{
+        return m_ptr == rhs.m_ptr;
+    }
+
+    bool operator!=(const_list_iterator const& rhs) const{
+        return !(*this == rhs);
+    }
+
+
+    private:
+        json::impl::list* const m_ptr;
+};
+
+json::const_list_iterator json::begin_list() const{     //ritorna un iteratore all'inizio di una lista
+    if(is_list()){
+        json::const_list_iterator it(this->pimpl->list_head);
+        return it;
+    }else{
+        throw json_exception{"at: begin_list_const: json is not a list"};
+    }
+}
+
+json::const_list_iterator json::end_list() const{
+    if(is_list()){
+        json::const_list_iterator it(nullptr);
+        return it;
+    }else{
+        throw json_exception{"at: end_list_const: json is not a list"};
+    }
+}
+
+
+struct json::const_dictionary_iterator{
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = const std::pair<std::string, json>;
+    using pointer = std::pair<std::string, json> const*;
+    using reference = std::pair<std::string, json> const&;
+
+    const_dictionary_iterator(json::impl::dict* ptr) : m_ptr(ptr) {}
+
+    reference operator*() const{
+        return m_ptr->info;
+    }
+
+    pointer operator->() const{
+        return &m_ptr->info;
+    }
+    const_dictionary_iterator& operator++(){
+        const_dictionary_iterator temp = m_ptr->next;
+        return temp;
+    }
+/*
+
+    const_dictionary_iterator operator++(int dummy){             //does it make sense in a const iterator?
+        const_dictionary_iterator temp = *this;
+        ++(*this);
+        return temp;
+    }
+*/
+    bool operator==(const_dictionary_iterator const& rhs) const{
+        return m_ptr == rhs.m_ptr;
+    }
+
+    bool operator!=(const_dictionary_iterator const& rhs) const{
+        return !(*this == rhs);
+    }
+
+    private:
+        json::impl::dict* const m_ptr;
+};
+
+json::const_dictionary_iterator json::begin_dictionary() const{     //ritorna un iteratore all'inizio di una lista
+    if(is_dictionary()){
+        json::const_dictionary_iterator it(this->pimpl->dict_head);
+        return it;
+    }else{
+        throw json_exception{"at: begin_dict_const: json is not a dict"};
+    }
+}
+
+json::const_dictionary_iterator json::end_dictionary() const{
+    if(is_dictionary()){
+        json::const_dictionary_iterator it(nullptr);
+        return it;
+    }else{
+        throw json_exception{"at: begin_dict_const: json is not a dict"};
+    }
+}
 
 /* -----------------------------------------------^^^-iterators-^^^----------------------------------------------- */
 /* --------------------------------------------------------------------------------------------------------------- */
@@ -694,10 +869,10 @@ void DICT(std::istream& lhs, json& rhs){    //reads a DICT from lhs and puts it 
 }
 
 void LIST_PRINT(std::ostream& lhs, json const& rhs){
-    json::const_list_iterator it = rhs.begin_list();
+    auto it = rhs.begin_list();
     while(it != rhs.end_list()){
         lhs << *it;     //right here *it is a json so it will recursively call the output operator
-        it++;
+        ++it;
         if(it != rhs.end_list()){
             lhs << ",";
         }
@@ -706,12 +881,12 @@ void LIST_PRINT(std::ostream& lhs, json const& rhs){
 }
 
 void DICT_PRINT(std::ostream& lhs, json const& rhs){
-    json::const_dictionary_iterator it = rhs.begin_dictionary();
+    auto it = rhs.begin_dictionary();
     while(it != rhs.end_dictionary()){
-        lhs << it.m_ptr->info.first;
+        lhs << it->first;
         lhs << "\" : ";
-        lhs << it.m_ptr->info.second;
-        it++;
+        lhs << it->second;
+        ++it;
         if(it != rhs.end_dictionary()){
             lhs << ",";
         }
