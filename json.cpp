@@ -8,21 +8,25 @@ struct json::impl{
     double num;                 //double
     bool statement;             //bool
     bool null;                  //null
+//if null is true then statement doesn't matter
+
     bool is_list;
     bool is_dict;
     struct list{                //list
         json info;
         list* next;
     };
+
+    list* list_head;            //list head
+    list* list_tail;
+
+
     struct dict{                //dictionary
         std::pair<std::string,json> info;
         dict* next;
     };
-    typedef list* pl;
-    typedef dict* pd;
-    pl list_head;                    //list head
-    pl list_tail;
-    pd dict_head;                    //dictionary head
+
+    dict* dict_head;            //dictionary head
 
 };
 
@@ -32,14 +36,14 @@ struct json::impl{
     void LIST_PRINT(std::ostream& lhs, json const& rhs);//is required const for the output and input signatures
     void DICT_PRINT(std::ostream& lhs, json const& rhs);
 
-
+//CHECKED
 json::json(){       //allocates a null json-type object
     pimpl = new impl;
 
     pimpl->str = "";
     pimpl->num = inf;
     pimpl->statement = false;   //value is not relevant since I'll be checking null
-    pimpl->null = true;         //if this is true all the other booleans are irrelevant
+    pimpl->null = true;         //if this is true then statement is not relevant
                     // except for is_list and is_dict that must be false to be coherent
     pimpl->is_list = false;
     pimpl->is_dict = false;
@@ -48,12 +52,15 @@ json::json(){       //allocates a null json-type object
     pimpl->list_tail = nullptr;
 }
 
+//CHECKED
 json::json(json const& j){          //copy constructor
     pimpl = new impl;
+
     pimpl->str = j.pimpl->str;
     pimpl->num = j.pimpl->num;
     pimpl->statement = j.pimpl->statement;
     pimpl->null = j.pimpl->null;
+
     pimpl->is_list = false;
     pimpl->is_dict = false;
     pimpl->list_head = nullptr;
@@ -62,7 +69,7 @@ json::json(json const& j){          //copy constructor
 
     if(j.is_list()){
         pimpl->is_list = true;
-        impl::pl temp = j.pimpl->list_head;
+        impl::list* temp = j.pimpl->list_head;
         while(temp != nullptr){
             push_back(temp->info);
             temp = temp->next;
@@ -70,7 +77,7 @@ json::json(json const& j){          //copy constructor
     }else{
         if(j.is_dictionary()){
             pimpl->is_dict = true;
-            impl::pd temp = j.pimpl->dict_head;
+            impl::dict* temp = j.pimpl->dict_head;
             while(temp != nullptr){
                 insert(temp->info);
                 temp = temp->next;
@@ -79,43 +86,31 @@ json::json(json const& j){          //copy constructor
     }
 }
 
-json::json(json&& j)    //move constructor
-    : json()    //calls default constructor
-{
+//CHECKED 
+//(try moving the just the impl* (pimpl) without touching anything)
+json::json(json&& j){       //move constructor
     if(this != &j){
-        pimpl->is_list = j.pimpl->is_list;
-        pimpl->is_dict = j.pimpl->is_dict;
-        pimpl->list_head = j.pimpl->list_head;
-        pimpl->dict_head = j.pimpl->dict_head;
-        pimpl->list_tail = j.pimpl->list_tail;
-
-        j.pimpl->list_head = nullptr;
-        j.pimpl->dict_head = nullptr;
-        j.pimpl->list_tail = nullptr;
-
-        pimpl->num = j.pimpl->num;
-        pimpl->str = j.pimpl->str;
-        pimpl->statement = j.pimpl->statement;
-        pimpl->null = j.pimpl->null;
-        j.set_null();
+        pimpl = j.pimpl;
+        j.pimpl = nullptr;
         delete j.pimpl;
     }
 
 }
 
-
+//IF SET_NULL WORKS THEN IT'S OK
 json::~json(){
     set_null();
     delete pimpl;
 }
 
+//CHECKED
 json& json::operator=(json const& j){
-    if(this != &j){
-        set_null();
+    if(this != &j){        //if this an j are not the same obj
+        set_null();        //clear this
 
         if(j.is_list()){
             pimpl->is_list = true;
-            impl::pl temp = j.pimpl->list_head;
+            impl::list* temp = j.pimpl->list_head;
             while(temp != nullptr){
                 push_back(temp->info);
                 temp = temp->next;
@@ -123,7 +118,7 @@ json& json::operator=(json const& j){
         }else{
             if(j.is_dictionary()){
                 pimpl->is_dict = true;
-                impl::pd temp = j.pimpl->dict_head;
+                impl::dict* temp = j.pimpl->dict_head;
                 while(temp != nullptr){
                     insert(temp->info);
                     temp = temp->next;
@@ -622,7 +617,7 @@ void json::insert(std::pair<std::string, json> const& x){
             pimpl->dict_head->info = x;
             pimpl->dict_head->next = nullptr;
         }else{
-            impl::pd temp = new impl::dict;
+            impl::dict* temp = new impl::dict;
             temp->info = x;
             temp->next = pimpl->dict_head;
             pimpl->dict_head = temp;
@@ -991,3 +986,5 @@ int main(){
 
 /*iterators don't work, the const iterators can't be incremented so they never
 point to the next item in the list or dictionary*/
+
+/* change every instance of "pl" into "list*" and pd to "dict*" */
