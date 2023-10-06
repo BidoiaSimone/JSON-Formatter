@@ -133,62 +133,81 @@ json& json::operator=(json const& j){
     return *this;
 }
 
-json& json::operator=(json&& j){
-    if(this != &j){
-        set_null();
+//CHECKED   
+json& json::operator=(json&& j){            //move operator
+    if(this != &j){     //if they are not the same obj
+        set_null();     //clear this object
 
-        pimpl->list_head = j.pimpl->list_head;
-        pimpl->dict_head = j.pimpl->dict_head;
-        pimpl->list_tail = j.pimpl->list_tail;
-
-        pimpl->is_list = j.pimpl->is_list;
-        pimpl->is_dict = j.pimpl->is_dict;
-
-        pimpl->num = j.pimpl->num;
-        pimpl->str = j.pimpl->str;
-        pimpl->statement = j.pimpl->statement;
-        pimpl->null = j.pimpl->null;
-        j.set_null();
+        pimpl = j.pimpl;
+        j.pimpl = nullptr;
+        delete j.pimpl;
     }
     return *this;
 }
 
+//CHECKED
 bool json::is_list() const{
-    bool check =(!(pimpl->null) and (pimpl->str == "") and (pimpl->num == inf) 
-    and (pimpl->is_list) and !(pimpl->is_dict));
+    
+    bool check;
+    check = pimpl->is_list      && 
+            !(pimpl->is_dict)   &&
+            !(pimpl->null)      &&
+            pimpl->num == inf   &&
+            pimpl->str == "";    
     return check;
 }
-
+//CHECKED
 bool json::is_dictionary() const{
-    bool check = (!(pimpl->null) and (pimpl->str == "") and (pimpl->num == inf) 
-    and !(pimpl->is_list) and (pimpl->is_dict));
+    bool check;
+    check = !(pimpl->is_list)   &&
+            pimpl->is_dict      &&
+            !(pimpl->null)      &&
+            pimpl->num == inf   &&
+            pimpl->str == "";
     return check;
 }
-
+//CHECKED
 bool json::is_string() const{
-    bool check = (!(pimpl->null) and (pimpl->str != "") and (pimpl->num == inf) 
-    and !(pimpl->is_list) and !(pimpl->is_dict));
+    bool check;
+    check = !(pimpl->is_list)   &&
+            !(pimpl->is_dict)   &&
+            !(pimpl->null)      &&
+            pimpl->num == inf   &&
+            pimpl->str != "";
     return check;
 }
-
+//CHECKED
 bool json::is_number() const{
-    bool check = (!(pimpl->null) and (pimpl->str == "") and (pimpl->num != inf) 
-    and !(pimpl->is_list) and !(pimpl->is_dict));
+    bool check;
+    check = !(pimpl->is_list)   &&
+            !(pimpl->is_dict)   &&
+            !(pimpl->null)      &&
+            pimpl->num != inf   &&
+            pimpl->str == "";
     return check;
 }
-
+//CHECKED
 bool json::is_bool() const{
-    bool check = (!(pimpl->null) and (pimpl->str == "") and (pimpl->num == inf) 
-    and !(pimpl->is_list) and !(pimpl->is_dict));
+    bool check;
+    check = !(pimpl->is_list)   &&
+            !(pimpl->is_dict)   &&
+            !(pimpl->null)      &&
+            pimpl->num == inf   &&
+            pimpl->str == "";
     return check;
 }
-
+//CHECKED
 bool json::is_null() const{
-    bool check = (pimpl->null and (pimpl->str == "") and (pimpl->num == inf) 
-    and !(pimpl->is_list) and !(pimpl->is_dict));
+    bool check;
+    check = !(pimpl->is_list)   &&
+            !(pimpl->is_dict)   &&
+            pimpl->null         &&
+            pimpl->num == inf   &&
+            pimpl->str == "";
     return check;
 }
 
+//CHECKED
 json const& json::operator[](std::string const& key) const{
     if(!is_dictionary()){
         throw json_exception{"at: op[]const: obj is not a dict"};
@@ -204,6 +223,7 @@ json const& json::operator[](std::string const& key) const{
     }
 }
 
+//CHECKED
 json& json::operator[](std::string const& key){
     if(!is_dictionary()){
         throw json_exception{"at: op[]const: obj is not a dict"};
@@ -211,16 +231,16 @@ json& json::operator[](std::string const& key){
         impl::dict* ptr = pimpl->dict_head;
         while(ptr != nullptr){
             if(ptr->info.first == key){
-                return ptr->info.second; 
+                return ptr->info.second;//if it finds the key it returns the value
             }
             ptr = ptr->next;
         }
-        json nuovo;
-        insert(std::make_pair(key, nuovo));
-        return ptr->next->info.second;
+        json nuovo; //if it doesn't find the key it makes a new node 
+        insert(std::make_pair(key, nuovo));//and returns a reference to it 
+        return ptr->next->info.second;//how the task required
     }
 }
-
+//IN THEORY THEY ARE CORRECT, IF IT STILL DOESN'T WORK I'LL CHECK THEM
 /* --------------------------------------------------------------------------------------------------------------- */
 /* -----------------------------------------------vvv-iterators-vvv----------------------------------------------- */
 
@@ -459,7 +479,9 @@ json::const_dictionary_iterator json::end_dictionary() const{
 /* -----------------------------------------------^^^-iterators-^^^----------------------------------------------- */
 /* --------------------------------------------------------------------------------------------------------------- */
 
-double& json::get_number(){
+
+//CHECKED
+double& json::get_number(){//returns a reference so it can be used to write
     if(is_number()){
         return pimpl->num;
     }else{
@@ -467,7 +489,8 @@ double& json::get_number(){
     }
 }
 
-double const& json::get_number() const{
+//CHECKED
+double const& json::get_number() const{//read only
     if(is_number()){
         return pimpl->num;
     }else{
@@ -475,7 +498,8 @@ double const& json::get_number() const{
     }
 }
 
-bool& json::get_bool(){
+//CHECKED
+bool& json::get_bool(){//returns a reference so it can be used to write
     if(is_bool()){
         return pimpl->statement;
     }else{
@@ -483,7 +507,8 @@ bool& json::get_bool(){
     }
 }
 
-bool const& json::get_bool() const{
+//CHECKED
+bool const& json::get_bool() const{//read only
     if(is_bool()){
         return pimpl->statement;
     }else{
@@ -491,7 +516,8 @@ bool const& json::get_bool() const{
     }
 }
 
-std::string& json::get_string(){
+//CHECKED
+std::string& json::get_string(){//returns a reference so it can be used to write
     if(is_string()){
         return pimpl->str;
     }else{
@@ -499,7 +525,8 @@ std::string& json::get_string(){
     }
 }
 
-std::string const& json::get_string() const{
+//CHECKED
+std::string const& json::get_string() const{//read only
     if(is_string()){
         return pimpl->str;
     }else{
@@ -507,6 +534,35 @@ std::string const& json::get_string() const{
     }
 }
 
+//CHECKED
+void json::set_null(){
+    if(!is_null()){
+        //clears an impl
+        pimpl->str = "";
+        pimpl->num = inf;
+        pimpl->null = true;
+        pimpl->is_list = false;
+        pimpl->is_dict = false;
+
+        while(pimpl->list_head != nullptr){      //deallocate list
+            impl::list* temp = pimpl->list_head->next;
+            delete pimpl->list_head;
+            pimpl->list_head = temp;
+        }
+        pimpl->list_tail = nullptr;
+        pimpl->list_head = nullptr;
+
+        while(pimpl->dict_head != nullptr){      //deallocate dictionary
+            impl::dict* temp = pimpl->dict_head->next;
+            delete pimpl->dict_head;
+            pimpl->dict_head = temp;
+        }
+        pimpl->dict_head = nullptr;
+    }
+    assert(is_null());
+}
+
+//CHECKED
 void json::set_string(std::string const& s){
     if(is_string()){
         pimpl->str = s;
@@ -515,8 +571,10 @@ void json::set_string(std::string const& s){
         pimpl->null = false;
         pimpl->str = s;
     }
+    assert(is_string());
 }
 
+//CHECKED   
 void json::set_bool(bool b){
     if(is_bool()){
         pimpl->statement = b;
@@ -525,8 +583,10 @@ void json::set_bool(bool b){
         pimpl->null = false;
         pimpl->statement = b;
     }
+    assert(is_bool());
 }
 
+//CHECKED
 void json::set_number(double x){
     if(is_number()){
         pimpl->num = x;
@@ -535,97 +595,62 @@ void json::set_number(double x){
         pimpl->null = false;
         pimpl->num = x;
     }
+    assert(is_number());
 }
 
-void json::set_null(){
-    //clears an impl
-    pimpl->str = "";
-    pimpl->num = inf;
-    pimpl->null = true;
-    pimpl->is_list = false;
-    pimpl->is_dict = false;
-
-    while(pimpl->list_head != nullptr){      //deallocate list
-        impl::list* temp = pimpl->list_head->next;
-        delete pimpl->list_head;
-        pimpl->list_head = temp;
-    }
-    pimpl->list_tail = nullptr;
-    pimpl->list_head = nullptr;
-    while(pimpl->dict_head != nullptr){      //deallocate dictionary
-        impl::dict* temp = pimpl->dict_head->next;
-        delete pimpl->dict_head;
-        pimpl->dict_head = temp;
-    }
-    pimpl->dict_head = nullptr;
-}
-
+//CHECKED
 void json::set_list(){
     set_null();
     pimpl->is_list = true;
     pimpl->null = false;
+    assert(is_list());
 }
 
+//CHECKED
 void json::set_dictionary(){
     set_null();
     pimpl->is_dict = true;
     pimpl->null = false;
+    assert(is_dictionary());
 }
 
+//USED PROF'S SLIDES
 void json::push_front(json const& x) {
-    if (is_list()) {
-        if (pimpl->list_head == nullptr) { // If the list is empty
-            pimpl->list_head = new impl::list;
-            pimpl->list_head->info = x;
-            pimpl->list_head->next = nullptr;
+    if(is_list()){
+        if(pimpl->list_head == nullptr) {
+            pimpl->list_head = new impl::list{x, nullptr};
             pimpl->list_tail = pimpl->list_head;
-        } else { // If the list is NOT empty
-            impl::list* temp = new impl::list; // Corrected declaration
-            temp->info = x;
-            temp->next = pimpl->list_head;
-            pimpl->list_head = temp;
+            return;
         }
-    } else {
-        throw json_exception{"at: push_front: obj is not a list"};
-    }
+        pimpl->list_head = new impl::list{x, pimpl->list_head};
+    }else   throw json_exception{"at: push_front: obj is not a list"};
 }
-
+    
+//USED PROF'S SLIDES
 void json::push_back(json const& x) {
-    if (is_list()) {
-        if (pimpl->list_head == nullptr) {
-            pimpl->list_head = new impl::list;
-            pimpl->list_head->info = x;
-            pimpl->list_head->next = nullptr;
-            pimpl->list_tail = pimpl->list_head;
-        } else {
-            impl::list* newNode = new impl::list;
-            newNode->info = x;
-            newNode->next = nullptr;
-            pimpl->list_tail->next = newNode; // Connect the new node to the end of the list
-            pimpl->list_tail = newNode; // Update list_tail to point to the new node
+    if(is_list()){
+        if(pimpl->list_head == nullptr){
+            push_front(x);
+            return;
         }
-    } else {
-        throw json_exception{"at: push_back: obj is not a list"};
-    }
+        pimpl->list_tail->next = new impl::list{x, nullptr};
+        pimpl->list_tail = pimpl->list_tail->next;
+    }else throw json_exception{"at: push_back: obj is not a list"};
 }
 
-
+//USED PROF'S SLIDES
 void json::insert(std::pair<std::string, json> const& x){
     if(is_dictionary()){
         if(pimpl->dict_head == nullptr){
-            pimpl->dict_head = new impl::dict;
-            pimpl->dict_head->info = x;
-            pimpl->dict_head->next = nullptr;
-        }else{
-            impl::dict* temp = new impl::dict;
-            temp->info = x;
-            temp->next = pimpl->dict_head;
-            pimpl->dict_head = temp;
+            pimpl->dict_head = new impl::dict{x, nullptr};
         }
-    }else{
-        throw json_exception{"at: insert: obj is not a dict"};
-    }
+        pimpl->dict_head = new impl::dict{x, pimpl->dict_head};
+    }else throw json_exception{"at: insert: obj is not a dict"};
 }
+
+
+
+
 
 void LIST(std::istream& lhs, json& rhs){    //reads a LIST from lhs and puts it in rhs
     char c;
@@ -987,4 +1012,5 @@ int main(){
 /*iterators don't work, the const iterators can't be incremented so they never
 point to the next item in the list or dictionary*/
 
-/* change every instance of "pl" into "list*" and pd to "dict*" */
+/* you can substitute every writing of "json::impl::..."
+with just impl::... */
