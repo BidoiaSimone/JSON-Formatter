@@ -10,7 +10,7 @@ struct json::impl{
     bool null;                  //null
 //if null is true then statement doesn't matter
 
-    bool is_list;
+    bool is_list;           //these are required because the list or dict could exist but be empty
     bool is_dict;
     struct list{                //list
         json info;
@@ -193,7 +193,7 @@ json const& json::operator[](std::string const& key) const{
     if(!is_dictionary()){
         throw json_exception{"at: op[]const: obj is not a dict"};
     }else{
-        impl::pd ptr = pimpl->dict_head;
+        impl::dict* ptr = pimpl->dict_head;
         while(ptr != nullptr){
             if(ptr->info.first == key){
                 return ptr->info.second; 
@@ -208,7 +208,7 @@ json& json::operator[](std::string const& key){
     if(!is_dictionary()){
         throw json_exception{"at: op[]const: obj is not a dict"};
     }else{
-        impl::pd ptr = pimpl->dict_head;
+        impl::dict* ptr = pimpl->dict_head;
         while(ptr != nullptr){
             if(ptr->info.first == key){
                 return ptr->info.second; 
@@ -546,14 +546,14 @@ void json::set_null(){
     pimpl->is_dict = false;
 
     while(pimpl->list_head != nullptr){      //deallocate list
-        impl::pl temp = pimpl->list_head->next;
+        impl::list* temp = pimpl->list_head->next;
         delete pimpl->list_head;
         pimpl->list_head = temp;
     }
     pimpl->list_tail = nullptr;
     pimpl->list_head = nullptr;
     while(pimpl->dict_head != nullptr){      //deallocate dictionary
-        impl::pd temp = pimpl->dict_head->next;
+        impl::dict* temp = pimpl->dict_head->next;
         delete pimpl->dict_head;
         pimpl->dict_head = temp;
     }
