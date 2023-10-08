@@ -30,12 +30,12 @@ struct json::impl{
 
 };
 
-    void LIST_PARSER(std::istream& lhs, json& rhs);
-    void DICT_PARSER(std::istream& lhs, json& rhs);
-    void BOOLEAN_PARSER(std::istream& lhs, json& rhs);
-    void NUMBER_PARSER(std::istream& lhs, json& rhs);
-    void NULL_PARSER(std::istream& lhs, json& rhs);
-    void STRING_PARSER(std::istream& lhs, json& rhs);
+    std::istream& LIST_PARSER(std::istream& lhs, json& rhs);
+    std::istream& DICT_PARSER(std::istream& lhs, json& rhs);
+    std::istream& BOOLEAN_PARSER(std::istream& lhs, json& rhs);
+    std::istream& NUMBER_PARSER(std::istream& lhs, json& rhs);
+    std::istream& NULL_PARSER(std::istream& lhs, json& rhs);
+    std::istream& STRING_PARSER(std::istream& lhs, json& rhs);
 
     void LIST_PRINT(std::ostream& lhs, json const& rhs);//is required const for the output and input signatures
     void DICT_PRINT(std::ostream& lhs, json const& rhs);
@@ -648,81 +648,35 @@ void json::insert(std::pair<std::string, json> const& x){
 
 
 
-void LIST_PARSER(std::istream& lhs, json& rhs){    //reads a LIST from lhs and puts it in rhs
+void LIST(std::istream& lhs, json& rhs){    //reads a LIST from lhs and puts it in rhs
     char c;
-    lhs >> c;       //reads the first char to see what it needs to parse then
-    std::cout << "______PARSING:______ " << c << std::endl;
+    lhs >> c;       //reads the first char to see what it needs to parse 
+
     if(c == '"'){   //parses a string, without considering spaces and tabs
-        std::string s;
-        do{
-            if(c == 92){
-                lhs >> c;       //if there's an escape, consume another char to skip the escape
-            }
-            s += c;
-            lhs >> c;
-        }while(c != '"');
-        s += c;
+        lhs.putback(c);
         json element;
-        element.set_string(s);
-            assert(element.is_string());
+        STRING_PARSER(lhs, element);       //should read the string from lhs and put it into element
         rhs.push_back(element);
-        if(s.back() == ','){
-            lhs.putback(s.back());
-        }
-        std::cout << "is a string: " << s << std::endl;
     }else{
         if(c >= 48 && c <= 57){ //parse a double
-            double num;
             lhs.putback(c);
-            lhs >> num;
             json element;
-            element.set_number(num);
-                assert(element.is_number());
+            NUMBER_PARSER(lhs, element);
             rhs.push_back(element);
-            std::cout << "is a number: " << num << std::endl;
         }else{
             if(c == 't' ||  c == 'f'){  //parse a boolean
-                std::string s;
                 lhs.putback(c);
-                lhs >> s;
                 json element;
-                if(s == "true" || s == "true," || s == "true]" || s == "true],"){ //add true]]
-                    element.set_bool(true);
-                }else{
-                    if(s == "false" || s == "false," || s == "false]" || "false],"){
-                        element.set_bool(false);
-                    }else{              //not true nor false
-                        std::cout << std::endl << "value: " << s << std::endl;
-                        throw json_exception{"at: LIST input: obj read is neither true or false"};
-                    }
-                }
-                    assert(element.is_bool());
+                BOOLEAN_PARSER(lhs, element);
                 rhs.push_back(element);
-                if(s.back() == ',' || s.back() == ']'){
-                    lhs.putback(s.back());
-                }
-                
-                std::cout << "is a bool:" << s << std::endl;
             }else{
                 if(c == 'n'){   //parse a NULL
-                    std::string s;
                     lhs.putback(c);
-
-                    lhs >> s;
-                    if(s == "null" || s == "null," || s == "null]" || s == "null],"){
-                        json element;
-                        element.set_null();
-                            assert(element.is_null());
-                        rhs.push_back(element);
-                    }else{
-                        throw json_exception{"at: LIST input: obj read is not a null"};
-                    }
-                    if(s.back() == ',' || s.back() == ']'){
-                        lhs.putback(s.back());
-                    }
-                    
-                    std::cout << "is a null: " << s << std::endl;
+                    json element;
+                    NULL_PARSER(lhs, element);
+                    rhs.push_back(element);
                 }else{
+
                     if(c == '['){   //parse a list
                         json element;
                         element.set_list();
@@ -759,10 +713,9 @@ void LIST_PARSER(std::istream& lhs, json& rhs){    //reads a LIST from lhs and p
     std::cout << "done" << std::endl;
 }
 
-//LIST input is done, i have to finish DICT input and then see how to use the possible iterators to output
-//everything
 
-void DICT_PARSER(std::istream& lhs, json& rhs){    //reads a DICT from lhs and puts it in rhs
+
+void DICT(std::istream& lhs, json& rhs){    //reads a DICT from lhs and puts it in rhs
     char c;
     std::string s;
     lhs >> c;   //reads  the "
@@ -885,14 +838,78 @@ void DICT_PARSER(std::istream& lhs, json& rhs){    //reads a DICT from lhs and p
     }  
 }
 
+/* FOR THE LOVE OF GOD USE THE SWITCH FUNTION NOT IF-ELSE */
+    std::istream& LIST_PARSER(std::istream& lhs, json& element){
+        return lhs;
+    }
 
-    void LIST_PARSER(std::istream& lhs, json& rhs);
-    void DICT_PARSER(std::istream& lhs, json& rhs);
-    void BOOLEAN_PARSER(std::istream& lhs, json& rhs){}
-    void NUMBER_PARSER(std::istream& lhs, json& rhs){}
-    void NULL_PARSER(std::istream& lhs, json& rhs){}
-    void STRING_PARSER(std::istream& lhs, json& rhs){}
+    std::istream& DICT_PARSER(std::istream& lhs, json& element){
+        return lhs;
+    }
 
+
+    std::istream& BOOLEAN_PARSER(std::istream& lhs, json& element){
+        std::string s;
+        lhs >> s;
+        if(s == "true" || s == "true," || s == "true]" || s == "true],"){ //add true]]
+            element.set_bool(true);
+        }else{
+            if(s == "false" || s == "false," || s == "false]" || "false],"){
+                element.set_bool(false);
+            }else{              //not true nor false
+                std::cout << std::endl << "value: " << s << std::endl;
+                throw json_exception{"at: BOOLEAN_PARSER input: obj read is neither true or false " + s};
+            }
+        }
+            assert(element.is_bool());
+        if(s.back() == ',' || s.back() == ']'){
+            lhs.putback(s.back());
+        }
+        return lhs;
+    }
+
+    std::istream& NUMBER_PARSER(std::istream& lhs, json& element){
+        double num;
+        lhs >> num;
+        element.set_number(num);        //of course does not read eventual , } ]
+            assert(element.is_number());
+        return lhs;
+    }
+
+    std::istream& NULL_PARSER(std::istream& lhs, json& element){
+        std::string s;
+        lhs >> s;
+        if(s == "null" || s == "null," || s == "null]" || s == "null],"){
+            element.set_null();
+                assert(element.is_null());
+        }else{
+            throw json_exception{"at: NULL_PARSER input: obj read is not a null " + s};
+        }
+        if(s.back() == ',' || s.back() == ']'){
+            lhs.putback(s.back());
+        }
+        return lhs;
+    }
+
+    std::istream& STRING_PARSER(std::istream& lhs, json& element){
+        std::string s;
+        char c;
+        lhs >> c;
+        do{
+            if(c == 92){
+                lhs >> c;       //if there's an escape, consume another char to skip the escape
+            }
+            s += c;
+            lhs >> c;
+        }while(c != '"');
+        s += c;
+        element.set_string(s);
+            assert(element.is_string());
+        if(s.back() == ','){
+            lhs.putback(s.back());
+        }
+        return lhs;
+    }
 
 
 void LIST_PRINT(std::ostream& lhs, json const& rhs){
@@ -971,16 +988,13 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
 
 std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs >> and puts them into rhs (lhs >> rhs)
     char c;
-    std::cout << "entered operator <<" << std::endl;
     lhs >> c;
     if(c == '['){   //is a list
         rhs.set_list(); //creates an empty list, i need to add the members with push_back, this is handled by LIST()
-        std::cout << "is a LIST" << std::endl;
         LIST_PARSER(lhs, rhs); //must read a list from std::input and put it in rhs
     }else{
         if(c == '{'){   //is a dictionary
             rhs.set_dictionary();
-            std::cout << "is a DICT" << std::endl;
             DICT_PARSER(lhs, rhs); //must read a dictionary from std::input and put it in rhs
         }    
     }
