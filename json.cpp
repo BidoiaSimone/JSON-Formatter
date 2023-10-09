@@ -112,7 +112,7 @@ json::~json(){
 
 //CHECKED
 json& json::operator=(json const& j){
-    if(this != &j){        //if this an j are not the same obj
+    if(this != &j){        //if this and j are not the same obj
         set_null();        //clear this
 
         if(j.is_list()){
@@ -627,6 +627,7 @@ void json::push_front(json const& x) {
     
 //USED PROF'S SLIDES
 void json::push_back(json const& x) {
+    assert(is_list());
     if(is_list()){
         if(pimpl->list_head == nullptr){
             push_front(x);
@@ -639,6 +640,7 @@ void json::push_back(json const& x) {
 
 //USED PROF'S SLIDES
 void json::insert(std::pair<std::string, json> const& x){
+    std::cout << x.first << " : " << x.second;
     if(is_dictionary()){
         if(pimpl->dict_head == nullptr){
             pimpl->dict_head = new impl::dict{x, nullptr};
@@ -686,6 +688,9 @@ void json::insert(std::pair<std::string, json> const& x){
                         element.set_list();
                         LIST_PARSER(lhs, element);    //reads the next list from input and puts it into element
                         rhs.push_back(element);
+                        lhs >> c;
+                        if(c != ']')
+                            throw json_exception{"at: LIST_PARSER: char is not ]"};
                     }else{
 
                         if(c == '{'){   //parse a dictionary
@@ -693,6 +698,9 @@ void json::insert(std::pair<std::string, json> const& x){
                             element.set_dictionary();
                             DICT_PARSER(lhs, element);
                             rhs.push_back(element);
+                            lhs >> c;
+                            if(c != '}')
+                                 throw json_exception{"at: DICT_PARSER: char is not }"};
                         }
                     }
                 }
@@ -701,6 +709,7 @@ void json::insert(std::pair<std::string, json> const& x){
     }
         //END OF PARSING, should now read another char to see if it's , or ] (can't be } since we are inside of a list)
         lhs >> c;
+
         if(c == ',')
             LIST_PARSER(lhs, rhs);
         
@@ -718,6 +727,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         key += c;
         lhs >> c; 
     }while(c != '"');
+    key += '"';
     lhs >> c;
     if(c != ':'){
         throw json_exception{"at: DICT input: char is not \":\""};
@@ -762,9 +772,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                         json element;
                         element.set_list();
                         LIST_PARSER(lhs, element); //populates element with the list in lhs
-                        std::pair<std::string, json> info;
-                        info.first = key;
-                        info.second = element;
+                        std::pair<std::string, json> info{key, element};
                         rhs.insert(info);
 
                     }else{
@@ -782,7 +790,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         }
     }
     lhs >> c;
-    std::cout << "ENDED DICT PSARSING WITH VALUE:--------->" << c << std::endl;
     if(c == ',')
         DICT_PARSER(lhs, rhs);
 
@@ -793,20 +800,21 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     std::istream& BOOLEAN_PARSER(std::istream& lhs, json& element){
         std::string s;
         lhs >> s;
-        if(s == "true" || s == "true," || s == "true]" || s == "true],"){ //add true]]
+        while(s != "true" && s != "false"){
+            lhs.putback(s.back());
+            s.pop_back();
+        }
+        if(s == "true"){ //add true]]
             element.set_bool(true);
         }else{
-            if(s == "false" || s == "false," || s == "false]" || "false],"){
+            if(s == "false"){
                 element.set_bool(false);
             }else{              //not true nor false
-                std::cout << std::endl << "value: " << s << std::endl;
                 throw json_exception{"at: BOOLEAN_PARSER input: obj read is neither true or false " + s};
             }
         }
             assert(element.is_bool());
-        if(s.back() == ',' || s.back() == ']'){
-            lhs.putback(s.back());
-        }
+        
         return lhs;
     }
 
@@ -821,14 +829,15 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     std::istream& NULL_PARSER(std::istream& lhs, json& element){
         std::string s;
         lhs >> s;
-        if(s == "null" || s == "null," || s == "null]" || s == "null],"){
+        while(s != "null"){
+            lhs.putback(s.back());
+            s.pop_back();
+        }
+        if(s == "null"){
             element.set_null();
                 assert(element.is_null());
         }else{
             throw json_exception{"at: NULL_PARSER input: obj read is not a null " + s};
-        }
-        if(s.back() == ',' || s.back() == ']'){
-            lhs.putback(s.back());
         }
         return lhs;
     }
@@ -836,40 +845,47 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     std::istream& STRING_PARSER(std::istream& lhs, json& element){
         std::string s;
         char c;
-        lhs >> c;       std::cout << "reading char:--------->" << c << std::endl;
+        lhs >> c;
         do{
             if(c == 92){
-                lhs >> c;       std::cout << "reading char:--------->" << c << std::endl;
+                lhs >> c;
             }
             s += c;
-            lhs >> c;           std::cout << "reading char:--------->" << c << std::endl;
+            lhs >> c;
         }while(c != '"');
         s += c;
+        while(s.back() == ',' || s.back() == ']' || s.back() == '}'){
+            lhs.putback(s.back());
+            s.pop_back();
+        }
         element.set_string(s);
             assert(element.is_string());
-        if(s.back() == ','){
-            lhs.putback(s.back());
-        }
         return lhs;
     }
 
+int layer = -1;
 
 void LIST_PRINT(std::ostream& lhs, json const& rhs){
-    auto it = rhs.begin_list();
+    json::const_list_iterator it = rhs.begin_list();
     while(it != rhs.end_list()){
+        if(layer == 0)
+            lhs << "    ";
         lhs << *it;     //right here *it is a json so it will recursively call the output operator
         it++;
         if(it != rhs.end_list()){
             lhs << ",";
         }
-        lhs << std::endl;
+        if(layer == 0)
+            lhs << std::endl;
     }
 }
 
 
 void DICT_PRINT(std::ostream& lhs, json const& rhs){
-    auto it = rhs.begin_dictionary();
+    json::const_dictionary_iterator it = rhs.begin_dictionary();
     while(it != rhs.end_dictionary()){
+        if(layer == 0)
+            lhs << "    ";
         lhs << it->first;
         lhs << "\" : ";
         lhs << it->second;
@@ -877,11 +893,12 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
         if(it != rhs.end_dictionary()){
             lhs << ",";
         }
-        lhs << std::endl;
+        if(layer == 0)
+            lhs << std::endl;
     }
 }
 
-
+//OUTPUT
 std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs from rhs and puts them into lhs (lhs << rhs)
 
     if(rhs.is_bool()){
@@ -900,14 +917,26 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
                     lhs << rhs.get_string();
                 }else{
                     if(rhs.is_list()){
-                        lhs << "[" << std::endl;
+                        lhs << "[";
+                        layer++;
+                        if(layer == 0)
+                            lhs << std::endl;
                         LIST_PRINT(lhs, rhs);
-                        lhs << "]" << std::endl;
+                        layer--;
+                        lhs << "]";
+                        if(layer == -1)
+                            lhs << std::endl;
                     }else{
                         if(rhs.is_dictionary()){
-                            lhs << "{" << std::endl;
+                            lhs << "{";
+                            layer++;
+                            if(layer == 0)
+                                lhs << std::endl;
                             DICT_PRINT(lhs, rhs);
-                            lhs << "}" << std::endl;
+                            layer--;
+                            lhs << "}";
+                            if(layer == -1)
+                                lhs << std::endl;
                         }
                     }
                 }
@@ -918,6 +947,7 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
     return lhs;
 }
 
+//INPUT
 std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs >> and puts them into rhs (lhs >> rhs)
     char c;
     lhs >> c;
@@ -937,6 +967,7 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
 
 
 int main(){
+
     
     json test;
     try{
@@ -962,12 +993,3 @@ int main(){
 
 
 
-
-/*iterators don't work, the const iterators can't be incremented so they never
-point to the next item in the list or dictionary*/
-
-/* you can substitute every writing of "json::impl::..."
-with just impl::... */
-
-/* when i'm inside a dict and i put a list in it, the next dict node is read like a string parsing,
-not like the key at the start of a dict node */
