@@ -762,7 +762,9 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                         json element;
                         element.set_list();
                         LIST_PARSER(lhs, element); //populates element with the list in lhs
-                        std::pair<std::string, json> info{key, element};
+                        std::pair<std::string, json> info;
+                        info.first = key;
+                        info.second = element;
                         rhs.insert(info);
 
                     }else{
@@ -780,6 +782,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         }
     }
     lhs >> c;
+    std::cout << "ENDED DICT PSARSING WITH VALUE:--------->" << c << std::endl;
     if(c == ',')
         DICT_PARSER(lhs, rhs);
 
@@ -833,13 +836,13 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     std::istream& STRING_PARSER(std::istream& lhs, json& element){
         std::string s;
         char c;
-        lhs >> c;
+        lhs >> c;       std::cout << "reading char:--------->" << c << std::endl;
         do{
             if(c == 92){
-                lhs >> c;       //if there's an escape, consume another char to skip the escape
+                lhs >> c;       std::cout << "reading char:--------->" << c << std::endl;
             }
             s += c;
-            lhs >> c;
+            lhs >> c;           std::cout << "reading char:--------->" << c << std::endl;
         }while(c != '"');
         s += c;
         element.set_string(s);
@@ -855,7 +858,7 @@ void LIST_PRINT(std::ostream& lhs, json const& rhs){
     auto it = rhs.begin_list();
     while(it != rhs.end_list()){
         lhs << *it;     //right here *it is a json so it will recursively call the output operator
-        ++it;
+        it++;
         if(it != rhs.end_list()){
             lhs << ",";
         }
@@ -863,13 +866,14 @@ void LIST_PRINT(std::ostream& lhs, json const& rhs){
     }
 }
 
+
 void DICT_PRINT(std::ostream& lhs, json const& rhs){
     auto it = rhs.begin_dictionary();
     while(it != rhs.end_dictionary()){
         lhs << it->first;
         lhs << "\" : ";
         lhs << it->second;
-        ++it;
+        it++;
         if(it != rhs.end_dictionary()){
             lhs << ",";
         }
@@ -878,40 +882,29 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
 }
 
 
-
 std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs from rhs and puts them into lhs (lhs << rhs)
 
     if(rhs.is_bool()){
-            assert(rhs.is_bool());
-        bool bin;
-        bin = rhs.get_bool();
-        if(bin == true){
+        bool statement = rhs.get_bool();    //if you just do lhs << rhs.get_bool() it prints 1/0
+        if(statement)
             lhs << "true";
-        }
-        if(bin == false){
-            lhs << "false";
-        }
+        else lhs << "false";
     }else{
         if(rhs.is_null()){
-                assert(rhs.is_null());
             lhs << "null";
         }else{
             if(rhs.is_number()){
-                    assert(rhs.is_number());
                 lhs << rhs.get_number();
             }else{
                 if(rhs.is_string()){
-                        assert(rhs.is_string());
                     lhs << rhs.get_string();
                 }else{
                     if(rhs.is_list()){
-                            assert(rhs.is_list());
                         lhs << "[" << std::endl;
                         LIST_PRINT(lhs, rhs);
                         lhs << "]" << std::endl;
                     }else{
                         if(rhs.is_dictionary()){
-                                assert(rhs.is_dictionary());
                             lhs << "{" << std::endl;
                             DICT_PRINT(lhs, rhs);
                             lhs << "}" << std::endl;
@@ -947,7 +940,9 @@ int main(){
     
     json test;
     try{
+
         std::cin >> test;
+        
     }
     catch(json_exception error){
         std::cout << std::endl << "-----------------------------------------"
@@ -973,3 +968,6 @@ point to the next item in the list or dictionary*/
 
 /* you can substitute every writing of "json::impl::..."
 with just impl::... */
+
+/* when i'm inside a dict and i put a list in it, the next dict node is read like a string parsing,
+not like the key at the start of a dict node */
