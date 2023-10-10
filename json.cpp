@@ -929,7 +929,11 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
 
 
 std::string to_lower_case(std::string str){
-    
+    std::string out;
+    for (auto c : str) {
+        out += (c >= 65 && c <= 90) ? c + 32 : c;
+    }
+    return out;
 }
 
 //OUTPUT
@@ -1007,26 +1011,34 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
 
 int main(){
 
-    
     json test;
     try{
 
         std::cin >> test;
-        
+        //(*(++test.begin_list()))["prima chiave"] = "test";
     }
     catch(json_exception error){
         std::cout << std::endl << "-----------------------------------------"
         << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
     }
     try{
+        #ifdef _WIN32
+        system("cls");
+        #elif __unix__
         system("clear");
+        #endif
+
         std::cout << test;
     }
     catch(json_exception error){
         std::cout << std::endl << "-----------------------------------------"
         << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
     }
-   
+
+    #ifdef _WIN32
+    system("pause");
+    #endif
+
     return 0;
 }
 
