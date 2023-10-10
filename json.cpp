@@ -27,6 +27,7 @@ struct json::impl{
     };
 
     dict* dict_head;            //dictionary head
+    dict* dict_tail;            //dictionary tail
 
 };
 
@@ -644,10 +645,11 @@ void json::insert(std::pair<std::string, json> const& x){
     if(is_dictionary()){
         if(pimpl->dict_head == nullptr){
             pimpl->dict_head = new impl::dict{x, nullptr};
+            pimpl->dict_tail = pimpl->dict_head;
         }else{
-           pimpl->dict_head = new impl::dict{x, pimpl->dict_head}; 
-        }
-        
+           pimpl->dict_tail->next = new impl::dict{x, nullptr}; 
+            pimpl->dict_tail = pimpl->dict_tail->next;
+        } 
     }else throw json_exception{"at: insert: obj is not a dict"};
 }
 
