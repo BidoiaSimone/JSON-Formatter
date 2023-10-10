@@ -982,29 +982,6 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
 }
 
 
-int main(){
-
-    
-    json test;
-    try{
-
-        std::cin >> test;
-        
-    }
-    catch(json_exception error){
-        std::cout << std::endl << "-----------------------------------------"
-        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
-    }
-    try{
-        std::cout << test;
-    }
-    catch(json_exception error){
-        std::cout << std::endl << "-----------------------------------------"
-        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
-    }
-   
-    return 0;
-}
 
 
 
