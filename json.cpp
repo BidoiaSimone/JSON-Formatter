@@ -640,12 +640,14 @@ void json::push_back(json const& x) {
 
 //USED PROF'S SLIDES
 void json::insert(std::pair<std::string, json> const& x){
-    std::cout << x.first << " : " << x.second;
+
     if(is_dictionary()){
         if(pimpl->dict_head == nullptr){
             pimpl->dict_head = new impl::dict{x, nullptr};
+        }else{
+           pimpl->dict_head = new impl::dict{x, pimpl->dict_head}; 
         }
-        pimpl->dict_head = new impl::dict{x, pimpl->dict_head};
+        
     }else throw json_exception{"at: insert: obj is not a dict"};
 }
 
@@ -690,7 +692,7 @@ void json::insert(std::pair<std::string, json> const& x){
                         rhs.push_back(element);
                         lhs >> c;
                         if(c != ']')
-                            throw json_exception{"at: LIST_PARSER: char is not ]"};
+                            throw json_exception{"at: LIST_PARSER: char is not ] "};
                     }else{
 
                         if(c == '{'){   //parse a dictionary
@@ -709,7 +711,8 @@ void json::insert(std::pair<std::string, json> const& x){
     }
         //END OF PARSING, should now read another char to see if it's , or ] (can't be } since we are inside of a list)
         lhs >> c;
-
+        if(c == ']')
+            lhs.putback(c);
         if(c == ',')
             LIST_PARSER(lhs, rhs);
         
@@ -721,14 +724,15 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     std::string key;
     lhs >> c;   //reads  the "
     do{
-        if(c == 92){
-            lhs >> c;       //if there's an escape consume another char
+        while(c == 92){
+            key += c;
+            lhs.get(c);       //if there's an escape consume another char
         }
         key += c;
-        lhs >> c; 
+        lhs.get(c); 
     }while(c != '"');
-    key += '"';
     lhs >> c;
+    
     if(c != ':'){
         throw json_exception{"at: DICT input: char is not \":\""};
     }
@@ -774,6 +778,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                         LIST_PARSER(lhs, element); //populates element with the list in lhs
                         std::pair<std::string, json> info{key, element};
                         rhs.insert(info);
+                        lhs >> c;
 
                     }else{
                         if(c == '{'){
@@ -783,6 +788,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                             DICT_PARSER(lhs, element); //populates element with the dictionary in lhs
                             std::pair<std::string, json> info{key, element};
                             rhs.insert(info);
+                            lhs >> c;
                         }
                     }
                 }
@@ -790,6 +796,8 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         }
     }
     lhs >> c;
+    if(c == '}')
+        lhs.putback(c);
     if(c == ',')
         DICT_PARSER(lhs, rhs);
 
@@ -799,12 +807,15 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
 
     std::istream& BOOLEAN_PARSER(std::istream& lhs, json& element){
         std::string s;
-        lhs >> s;
-        while(s != "true" && s != "false"){
-            lhs.putback(s.back());
-            s.pop_back();
+        char c;
+        char peek = lhs.peek();
+        while(peek == 't' || peek == 'r' || peek == 'u' || peek == 'e'
+            || peek == 'f' || peek == 'a' || peek == 'l' || peek == 's'){
+            lhs >> c;
+            s += c;
+            peek = lhs.peek();
         }
-        if(s == "true"){ //add true]]
+        if(s == "true"){ 
             element.set_bool(true);
         }else{
             if(s == "false"){
@@ -828,10 +839,12 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
 
     std::istream& NULL_PARSER(std::istream& lhs, json& element){
         std::string s;
-        lhs >> s;
-        while(s != "null"){
-            lhs.putback(s.back());
-            s.pop_back();
+        char c;
+        char peek = lhs.peek();
+        while(peek == 'n' || peek == 'u' || peek == 'l'){
+            lhs >> c;
+            s += c;
+            peek = lhs.peek();
         }
         if(s == "null"){
             element.set_null();
@@ -845,13 +858,14 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     std::istream& STRING_PARSER(std::istream& lhs, json& element){
         std::string s;
         char c;
-        lhs >> c;
+        lhs.get(c);
         do{
-            if(c == 92){
-                lhs >> c;
+            while(c == 92){ //in this way if there's a '\\\\"' no matter how many \ there are it is working
+                s += c;
+                lhs.get(c);
             }
             s += c;
-            lhs >> c;
+            lhs.get(c);
         }while(c != '"');
         s += c;
         while(s.back() == ',' || s.back() == ']' || s.back() == '}'){
