@@ -1,5 +1,15 @@
 #include "json.hpp"
 
+#define DEFAULT 	"\033[0m"
+#define BLACK		"\033[0;30m"
+#define RED 		"\033[0;31m"		
+#define GREEN		"\033[0;32m"
+#define YELLOW		"\033[0;33m"
+#define BLUE		"\033[0;34m"
+#define PURPLE		"\033[0;35m"
+#define CYAN		"\033[0;36m"
+#define WHITE		"\033[0;37m"
+
 static constexpr double inf = std::numeric_limits<double>::max();
 
 struct json::impl{
@@ -885,15 +895,14 @@ int layer = -1;
 void LIST_PRINT(std::ostream& lhs, json const& rhs){
     json::const_list_iterator it = rhs.begin_list();
     while(it != rhs.end_list()){
-        if(layer == 0)
+        for(int i = layer; i >= 0; i--)
             lhs << "    ";
         lhs << *it;     //right here *it is a json so it will recursively call the output operator
         it++;
         if(it != rhs.end_list()){
             lhs << ",";
         }
-        if(layer == 0)
-            lhs << std::endl;
+        lhs << std::endl;
     }
 }
 
@@ -901,59 +910,72 @@ void LIST_PRINT(std::ostream& lhs, json const& rhs){
 void DICT_PRINT(std::ostream& lhs, json const& rhs){
     json::const_dictionary_iterator it = rhs.begin_dictionary();
     while(it != rhs.end_dictionary()){
-        if(layer == 0)
+        for(int i = layer; i >= 0; i--)
             lhs << "    ";
+        std::cout << BLUE;
         lhs << it->first;
-        lhs << "\" : ";
+        lhs << "\"";
+        std::cout << DEFAULT;
+        lhs << " : ";
         lhs << it->second;
         it++;
+        std::cout << DEFAULT;
         if(it != rhs.end_dictionary()){
             lhs << ",";
         }
-        if(layer == 0)
-            lhs << std::endl;
+        lhs << std::endl;
     }
+}
+
+
+std::string to_lower_case(std::string str){
+    
 }
 
 //OUTPUT
 std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs from rhs and puts them into lhs (lhs << rhs)
 
     if(rhs.is_bool()){
+        std::cout << PURPLE;
         bool statement = rhs.get_bool();    //if you just do lhs << rhs.get_bool() it prints 1/0
         if(statement)
             lhs << "true";
         else lhs << "false";
+        std::cout << DEFAULT;
     }else{
         if(rhs.is_null()){
             lhs << "null";
         }else{
             if(rhs.is_number()){
+                std::cout << RED;
                 lhs << rhs.get_number();
+                std::cout << DEFAULT;
             }else{
                 if(rhs.is_string()){
+                    if(to_lower_case(rhs.get_string()) == "simone")
+                    std::cout << GREEN;
                     lhs << rhs.get_string();
+                    std::cout << DEFAULT;
                 }else{
                     if(rhs.is_list()){
                         lhs << "[";
                         layer++;
-                        if(layer == 0)
-                            lhs << std::endl;
+                        lhs << std::endl;
                         LIST_PRINT(lhs, rhs);
-                        layer--;
+                        for(int i = layer; i > 0; i--)
+                            lhs << "    ";
                         lhs << "]";
-                        if(layer == -1)
-                            lhs << std::endl;
+                        layer--;
                     }else{
                         if(rhs.is_dictionary()){
                             lhs << "{";
                             layer++;
-                            if(layer == 0)
-                                lhs << std::endl;
+                            lhs << std::endl;
                             DICT_PRINT(lhs, rhs);
-                            layer--;
+                            for(int i = layer; i > 0; i--)
+                                lhs << "    ";
                             lhs << "}";
-                            if(layer == -1)
-                                lhs << std::endl;
+                            layer--;
                         }
                     }
                 }
@@ -997,6 +1019,7 @@ int main(){
         << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
     }
     try{
+        system("clear");
         std::cout << test;
     }
     catch(json_exception error){
@@ -1008,5 +1031,10 @@ int main(){
 }
 
 
-
+/* chiavi blu
+stringhe verdi
+num rossi
+bool viola
+null default
+ */
 
