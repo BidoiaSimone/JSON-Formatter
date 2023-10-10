@@ -47,35 +47,35 @@
             "medicationsClasses":[{
                 "className":[{
                     "associatedDrug":[{
-                        "name":"asprin",
-                        "dose":"",
-                        "strength":"500 mg"
+                        "name":"simone",
+                        "dose":true,
+                        "strength":500
                     }],
                     "associatedDrug#2":[{
                         "name":"somethingElse",
-                        "dose":"",
-                        "strength":"500 mg"
+                        "dose":null,
+                        "strength":500
                     }]
                 }],
                 "className2":[{
                     "associatedDrug":[{
                         "name":"asprin",
-                        "dose":"",
+                        "dose":null,
                         "strength":"500 mg"
                     }],
                     "associatedDrug#2":[{
                         "name":"somethingElse",
-                        "dose":"",
+                        "dose":null,
                         "strength":"500 mg"
                     }]
                 }]
             }]
         }],
         "labs":[{
-            "missing_field": "missing_value"
+            "missing_field": false
         }]
     }],
-    "Asthma":[{"a":3}]
+    "Asthma":[{"a":false}]
 }
 ]
 }

@@ -10,6 +10,10 @@
 #define CYAN		"\033[0;36m"
 #define WHITE		"\033[0;37m"
 
+std::string colors[6] = {
+    RED, GREEN, YELLOW, BLUE, PURPLE, CYAN
+};
+
 static constexpr double inf = std::numeric_limits<double>::max();
 
 struct json::impl{
@@ -41,6 +45,7 @@ struct json::impl{
 
 };
 
+int layer = -1;
     std::istream& LIST_PARSER(std::istream& lhs, json& rhs);
     std::istream& DICT_PARSER(std::istream& lhs, json& rhs);
     std::istream& BOOLEAN_PARSER(std::istream& lhs, json& rhs);
@@ -892,7 +897,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         return lhs;
     }
 
-int layer = -1;
+
 
 void LIST_PRINT(std::ostream& lhs, json const& rhs){
     json::const_list_iterator it = rhs.begin_list();
@@ -930,7 +935,7 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
 }
 
 
-std::string to_lower_case(std::string str){
+std::string to_lower_case(std::string const& str){
     std::string out;
     for (auto c : str) {
         out += (c >= 65 && c <= 90) ? c + 32 : c;
@@ -958,10 +963,22 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
                 std::cout << DEFAULT;
             }else{
                 if(rhs.is_string()){
-                    if(to_lower_case(rhs.get_string()) == "simone")
-                    std::cout << GREEN;
-                    lhs << rhs.get_string();
-                    std::cout << DEFAULT;
+                    if(to_lower_case(rhs.get_string()) == "\"simone\""){
+                        std::string str = rhs.get_string();
+                        std::cout << GREEN;
+                        lhs << str[0];
+                        for(int i = 0; i < 6; i++){
+                            std::cout << colors[i];
+                            lhs << str[i+1];
+                        }
+                        std::cout << GREEN;
+                        lhs << str[7];
+                    }else{
+                        std::cout << GREEN;
+                        lhs << rhs.get_string();
+                        std::cout << DEFAULT;
+                    }
+                    
                 }else{
                     if(rhs.is_list()){
                         lhs << "[";
@@ -1013,21 +1030,11 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
 
 int main(){
 
-<<<<<<< Updated upstream
     json test;
     try{
 
         std::cin >> test;
         //(*(++test.begin_list()))["prima chiave"] = "test";
-=======
-    
-    json j;
-    try{
-
-        std::cin >> j;
-        
-        
->>>>>>> Stashed changes
     }
     catch(json_exception error){
         std::cout << std::endl << "-----------------------------------------"
@@ -1039,13 +1046,9 @@ int main(){
         system("cls");
         #elif __unix__
         system("clear");
-<<<<<<< Updated upstream
         #endif
 
         std::cout << test;
-=======
-        std::cout << j;
->>>>>>> Stashed changes
     }
     catch(json_exception error){
         std::cout << std::endl << "-----------------------------------------"
