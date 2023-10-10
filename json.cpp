@@ -649,7 +649,8 @@ void json::insert(std::pair<std::string, json> const& x){
         }else{
            pimpl->dict_tail->next = new impl::dict{x, nullptr}; 
             pimpl->dict_tail = pimpl->dict_tail->next;
-        } 
+        }
+ 
     }else throw json_exception{"at: insert: obj is not a dict"};
 }
 
@@ -982,6 +983,29 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
 }
 
 
+int main(){
+
+    
+    json test;
+    try{
+
+        std::cin >> test;
+        
+    }
+    catch(json_exception error){
+        std::cout << std::endl << "-----------------------------------------"
+        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
+    }
+    try{
+        std::cout << test;
+    }
+    catch(json_exception error){
+        std::cout << std::endl << "-----------------------------------------"
+        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
+    }
+   
+    return 0;
+}
 
 
 
