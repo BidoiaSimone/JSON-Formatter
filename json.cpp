@@ -227,6 +227,7 @@ bool json::is_null() const{
 
 //CHECKED
 json const& json::operator[](std::string const& key) const{
+    std::cout << "op []";
     if(!is_dictionary()){
         throw json_exception{"at: op[]const: obj is not a dict"};
     }else{
@@ -243,6 +244,7 @@ json const& json::operator[](std::string const& key) const{
 
 //CHECKED
 json& json::operator[](std::string const& key){
+    std::cout << "op [] const";
     if(!is_dictionary()){
         throw json_exception{"at: op[]const: obj is not a dict"};
     }else{
@@ -254,7 +256,7 @@ json& json::operator[](std::string const& key){
             ptr = ptr->next;
         }
         json nuovo; //if it doesn't find the key it makes a new node 
-        insert(std::make_pair(key, nuovo));//and returns a reference to it 
+        insert(std::pair<std::string, json>{key, nuovo});//and returns a reference to it 
         return ptr->next->info.second;//how the task required
     }
 }
@@ -1011,24 +1013,39 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
 
 int main(){
 
+<<<<<<< Updated upstream
     json test;
     try{
 
         std::cin >> test;
         //(*(++test.begin_list()))["prima chiave"] = "test";
+=======
+    
+    json j;
+    try{
+
+        std::cin >> j;
+        
+        
+>>>>>>> Stashed changes
     }
     catch(json_exception error){
         std::cout << std::endl << "-----------------------------------------"
         << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
     }
+    std::cout << "ok" << std::endl;
     try{
         #ifdef _WIN32
         system("cls");
         #elif __unix__
         system("clear");
+<<<<<<< Updated upstream
         #endif
 
         std::cout << test;
+=======
+        std::cout << j;
+>>>>>>> Stashed changes
     }
     catch(json_exception error){
         std::cout << std::endl << "-----------------------------------------"
@@ -1043,10 +1060,5 @@ int main(){
 }
 
 
-/* chiavi blu
-stringhe verdi
-num rossi
-bool viola
-null default
- */
+
 
