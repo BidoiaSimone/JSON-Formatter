@@ -850,6 +850,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     std::istream& STRING_PARSER(std::istream& lhs, json& element){
         std::string s;
         char c;
+        lhs >> c;   //consumes '"'
         lhs.get(c);
         do{
             while(c == 92){ //in this way if there's a '\\\\"' no matter how many \ there are it is working
@@ -859,7 +860,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
             s += c;
             lhs.get(c);
         }while(c != '"');
-        s += c;
+        if(s.back() == '"') s.pop_back();
         while(s.back() == ',' || s.back() == ']' || s.back() == '}'){
             lhs.putback(s.back());
             s.pop_back();
@@ -920,7 +921,7 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
                 lhs << rhs.get_number();
             }else{
                 if(rhs.is_string()){
-                    lhs << rhs.get_string();
+                    lhs << '\"' << rhs.get_string() << '\"';
                 }else{
                     if(rhs.is_list()){
                         lhs << "[";
@@ -972,7 +973,12 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
 }
 
 
-
+int main(){
+    json j;
+    std::cin >> j;
+    std::cout << j;
+    return 0;
+}
 
 
 
