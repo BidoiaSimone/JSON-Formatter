@@ -658,6 +658,7 @@ void json::insert(std::pair<std::string, json> const& x){
     std::istream& LIST_PARSER(std::istream& lhs, json& rhs){
     char c;
     lhs >> c;       //reads the first char to see what it needs to parse 
+    if(c == ']') return lhs;    
 
     if(c == '"'){   //parses a string, without considering spaces and tabs
         lhs.putback(c);
@@ -692,9 +693,6 @@ void json::insert(std::pair<std::string, json> const& x){
                         element.set_list();
                         LIST_PARSER(lhs, element);    //reads the next list from input and puts it into element
                         rhs.push_back(element);
-                        lhs >> c;
-                        if(c != ']')
-                            throw json_exception{"at: LIST_PARSER: char is not ] "};
                     }else{
 
                         if(c == '{'){   //parse a dictionary
@@ -702,19 +700,14 @@ void json::insert(std::pair<std::string, json> const& x){
                             element.set_dictionary();
                             DICT_PARSER(lhs, element);
                             rhs.push_back(element);
-                            lhs >> c;
-                            if(c != '}')
-                                 throw json_exception{"at: DICT_PARSER: char is not }"};
                         }
                     }
                 }
             }
         }
     }
-        //END OF PARSING, should now read another char to see if it's , or ] (can't be } since we are inside of a list)
+
         lhs >> c;
-        if(c == ']')
-            lhs.putback(c);
         if(c == ',')
             LIST_PARSER(lhs, rhs);
         
@@ -725,6 +718,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     char c;
     std::string key;
     lhs >> c;   //reads  the "
+    if(c == '}') return lhs;
     do{
         while(c == 92){
             key += c;
@@ -780,7 +774,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                         LIST_PARSER(lhs, element); //populates element with the list in lhs
                         std::pair<std::string, json> info{key, element};
                         rhs.insert(info);
-                        lhs >> c;
 
                     }else{
                         if(c == '{'){
@@ -790,7 +783,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                             DICT_PARSER(lhs, element); //populates element with the dictionary in lhs
                             std::pair<std::string, json> info{key, element};
                             rhs.insert(info);
-                            lhs >> c;
                         }
                     }
                 }
@@ -798,8 +790,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         }
     }
     lhs >> c;
-    if(c == '}')
-        lhs.putback(c);
     if(c == ',')
         DICT_PARSER(lhs, rhs);
 

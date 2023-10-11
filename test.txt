@@ -2,7 +2,7 @@
     "prima chiave" : 5,
     "seconda chiave" : [4.12,2,true],
     "terza chiave" : "una stringa",
-    "quarta chiave" : {"a" : 4, "b" : [4,5]}
+    "quarta chiave" : {}
 }
 
 [
@@ -11,7 +11,7 @@
     34.5,
     true,
     null, 
-    [1,2,false,43],
+    [],
     {"prima chiave" : "ciao", "seconda chaive" : [1,true,34.5]}
 ]
 
