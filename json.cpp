@@ -722,6 +722,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     std::string key;
     lhs >> c;   //reads  the "
     if(c == '}') return lhs;
+    lhs >> c;   //skips the "
     do{
         while(c == 92){
             key += c;
@@ -896,6 +897,7 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
     while(it != rhs.end_dictionary()){
         if(layer == 0)
             lhs << "    ";
+        lhs << "\"";
         lhs << it->first;
         lhs << "\" : ";
         lhs << it->second;

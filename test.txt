@@ -1,6 +1,6 @@
 {
     "prima chiave" : 5,
-    "seconda chiave" : [4.12,2,true],
+    "seconda chiave" : [4.12,2,{"ciao" : 1, "bye" : null, "third" : []}],
     "terza chiave" : "una stringa",
     "quarta chiave" : {}
 }
