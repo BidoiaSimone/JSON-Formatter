@@ -58,6 +58,7 @@ json::json(){       //allocates a null json-type object
     pimpl->list_head = nullptr;
     pimpl->dict_head = nullptr;
     pimpl->list_tail = nullptr;
+    pimpl->dict_tail = nullptr;
 }
 
 //CHECKED
@@ -74,6 +75,7 @@ json::json(json const& j){          //copy constructor
     pimpl->list_head = nullptr;
     pimpl->dict_head = nullptr;
     pimpl->list_tail = nullptr;
+    pimpl->dict_tail = nullptr;
 
     if(j.is_list()){
         pimpl->is_list = true;
@@ -244,7 +246,7 @@ json& json::operator[](std::string const& key){
             ptr = ptr->next;
         }
         json nuovo; //if it doesn't find the key it makes a new node 
-        insert(std::make_pair(key, nuovo));//and returns a reference to it 
+        insert(std::pair<std::string, json> {key, nuovo});//and returns a reference to it 
         return ptr->next->info.second;//how the task required
     }
 }
@@ -558,6 +560,7 @@ void json::set_null(){
             pimpl->dict_head = temp;
         }
         pimpl->dict_head = nullptr;
+        pimpl->dict_tail = nullptr;
     }
     assert(is_null());
 }
@@ -973,12 +976,6 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
 }
 
 
-int main(){
-    json j;
-    std::cin >> j;
-    std::cout << j;
-    return 0;
-}
 
 
 
