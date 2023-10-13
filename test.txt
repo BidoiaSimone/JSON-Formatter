@@ -2,107 +2,18 @@
     "prima chiave" : 5,
     "seconda chiave" : [4.12,2,true],
     "terza chiave" : "una stringa",
-    "quarta chiave" : {"a" : 4, "b" : [4,5]}
+    "quarta chiave" : {"a" : 4, "b" : []}
 }
 
-[
-    "prima stringa",
-    "seconda stringa",
-    34.5,
-    true,
-    null, 
-    [1,2,false,43],
-    {"prima chiave" : "ciao", "seconda chaive" : [1,true,34.5]}
-]
+["prima stringa","",34.5,true,null, [1,2,false,43],{"prima chiave" : "ciao", "seconda chaive" : []}]
 
-{
-    "prima chiave" : 5,
-    "seconda chiave" : null,
-    "terza chiave" : "una stringa",
-    "quarta chiave" : true
-}
+{"prima chiave" : 5,"seconda chiave" : null,"terza chiave" : "una stringa","quarta chiave" : true}
 
-[
-    "una stringa con \n virgolette \"escaped\"",
-    "seconda stringa senza escape",
-    "terza stringa con altri\" escape",
-    "doppio \\" escape"
-]
+["una stringa con \n virgolette \"escaped\"","seconda stringa senza escape","terza stringa con altri\" escape","doppio \\" escape"]
 
 
 {"c" : 5, "d" : 6}
-[
-    1,
-    {
-        "prima chiave" : {"c" : 5, "d" : 6},
-        "seconda chiave" : [1,true],
-        "terza chiave" : "una stringa",
-        "quarta chiave" : {"a" : 4, "b" : [4,5]}
-    },
-    3
-]
 
-{
-"problems": [{
-    "Diabetes":[{
-        "medications":[{
-            "medicationsClasses":[{
-                "className":[{
-                    "associatedDrug":[{
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                        "name":"simone",
-=======
-                        "name":"sIMoNe",
->>>>>>> Stashed changes
-                        "dose":true,
-                        "strength":500
-                    }],
-                    "associatedDrug#2":[{
-                        "name":"somethingElse",
-                        "dose":null,
-                        "strength":500
-=======
-                        "name":"asprin",
-                        "dose":"ciao",
-                        "strength":"500 mg"
-                    }],
-                    "associatedDrug#2":[{
-                        "name":"somethingElse",
-                        "dose":"ciao",
-                        "strength":"500 mg"
->>>>>>> Stashed changes
-                    }]
-                }],
-                "className2":[{
-                    "associatedDrug":[{
-                        "name":"asprin",
-<<<<<<< Updated upstream
-                        "dose":null,
-=======
-                        "dose":"jfis",
->>>>>>> Stashed changes
-                        "strength":"500 mg"
-                    }],
-                    "associatedDrug#2":[{
-                        "name":"somethingElse",
-<<<<<<< Updated upstream
-                        "dose":null,
-=======
-                        "dose":"simone",
->>>>>>> Stashed changes
-                        "strength":"500 mg"
-                    }]
-                }]
-            }]
-        }],
-        "labs":[{
-            "missing_field": false
-        }]
-    }],
-    "Asthma":[{"a":false}]
-}
-]
-}
+[1,{"prima chiave" : {"c" : 5, "d" : 6},"seconda chiave" : [1,true],"terza chiave"  : "una stringa","quarta chiave" : {"a" : 4, "b" : [4,5]}},3]
 
-
+  {"lat": 52.2297,"lon": 21.0122,"timezone": "","timezone_offset": 3600,"data": [{"dt": 1645888976,"sunrise": 1645853361,"sunset": 1645891727,"test"        : {},"temp": 279.13,"feels_like": 276.44,"pressure": 1029,"humidity": 64,"dew_point": true,"uvi": 0.06,"clouds": 0,"visibility": 10000,"wind_speed": 3.6,"wind_deg": false,"weather": [{"id": null,"main": "simONE","description": "clear sky","icon": "01d"}]}]}

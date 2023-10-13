@@ -1,4 +1,5 @@
 #include "json.hpp"
+#include <fstream>
 
 #define DEFAULT 	"\033[0m"
 #define BLACK		"\033[0;30m"
@@ -26,6 +27,7 @@ struct json::impl{
 
     bool is_list;           //these are required because the list or dict could exist but be empty
     bool is_dict;
+    bool is_string;
     struct list{                //list
         json info;
         list* next;
@@ -44,10 +46,6 @@ struct json::impl{
     dict* dict_tail;            //dictionary tail
 
 };
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 int layer = -1;
     std::istream& LIST_PARSER(std::istream& lhs, json& rhs);
     std::istream& DICT_PARSER(std::istream& lhs, json& rhs);
@@ -71,6 +69,7 @@ json::json(){       //allocates a null json-type object
     pimpl->statement = false;   //value is not relevant since I'll be checking null
     pimpl->null = true;         //if this is true then statement is not relevant
                     // except for is_list and is_dict that must be false to be coherent
+    pimpl->is_string = false;
     pimpl->is_list = false;
     pimpl->is_dict = false;
     pimpl->list_head = nullptr;
@@ -86,6 +85,7 @@ json::json(json const& j){          //copy constructor
     pimpl->num = j.pimpl->num;
     pimpl->statement = j.pimpl->statement;
     pimpl->null = j.pimpl->null;
+    pimpl->is_string = j.pimpl->is_string;
 
     pimpl->is_list = false;
     pimpl->is_dict = false;
@@ -154,6 +154,7 @@ json& json::operator=(json const& j){
         pimpl->statement = j.pimpl->statement;
         pimpl->num = j.pimpl->num;
         pimpl->null = j.pimpl->null;
+        pimpl->is_string = j.pimpl->is_string;
         pimpl->str = j.pimpl->str;
     }
     return *this;
@@ -179,7 +180,7 @@ bool json::is_list() const{
             !(pimpl->is_dict)   &&
             !(pimpl->null)      &&
             pimpl->num == inf   &&
-            pimpl->str == "";    
+            !(pimpl->is_string);    
     return check;
 }
 //CHECKED
@@ -189,7 +190,7 @@ bool json::is_dictionary() const{
             pimpl->is_dict      &&
             !(pimpl->null)      &&
             pimpl->num == inf   &&
-            pimpl->str == "";
+            !(pimpl->is_string);
     return check;
 }
 //CHECKED
@@ -199,7 +200,7 @@ bool json::is_string() const{
             !(pimpl->is_dict)   &&
             !(pimpl->null)      &&
             pimpl->num == inf   &&
-            pimpl->str != "";
+            pimpl->is_string;
     return check;
 }
 //CHECKED
@@ -209,7 +210,7 @@ bool json::is_number() const{
             !(pimpl->is_dict)   &&
             !(pimpl->null)      &&
             pimpl->num != inf   &&
-            pimpl->str == "";
+            !(pimpl->is_string);
     return check;
 }
 //CHECKED
@@ -219,7 +220,7 @@ bool json::is_bool() const{
             !(pimpl->is_dict)   &&
             !(pimpl->null)      &&
             pimpl->num == inf   &&
-            pimpl->str == "";
+            !(pimpl->is_string);
     return check;
 }
 //CHECKED
@@ -229,7 +230,7 @@ bool json::is_null() const{
             !(pimpl->is_dict)   &&
             pimpl->null         &&
             pimpl->num == inf   &&
-            pimpl->str == "";
+            !(pimpl->is_string);
     return check;
 }
 
@@ -563,6 +564,7 @@ void json::set_null(){
         pimpl->null = true;
         pimpl->is_list = false;
         pimpl->is_dict = false;
+        pimpl->is_string = false;
 
         while(pimpl->list_head != nullptr){      //deallocate list
             impl::list* temp = pimpl->list_head->next;
@@ -588,6 +590,7 @@ void json::set_string(std::string const& s){
         pimpl->str = s;
     }else{
         set_null();
+        pimpl->is_string = true;
         pimpl->null = false;
         pimpl->str = s;
     }
@@ -679,7 +682,10 @@ void json::insert(std::pair<std::string, json> const& x){
     std::istream& LIST_PARSER(std::istream& lhs, json& rhs){
     char c;
     lhs >> c;       //reads the first char to see what it needs to parse 
-
+    if(c == ']'){
+        lhs.putback(c);
+        return lhs;
+    } 
     if(c == '"'){   //parses a string, without considering spaces and tabs
         lhs.putback(c);
         json element;
@@ -746,6 +752,11 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     char c;
     std::string key;
     lhs >> c;   //reads  the "
+    if(c == '}'){
+        lhs.putback(c);
+        return lhs;
+    }
+    lhs >> c;   //skips the "
     do{
         while(c == 92){
             key += c;
@@ -757,9 +768,11 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     lhs >> c;
     
     if(c != ':'){
-        throw json_exception{"at: DICT input: char is not \":\""};
+        std::string str = "at: DICT input: char is not \":\"";
+        str += c;
+        str += key;
+        throw json_exception{str};
     }
-                    //now s is the key, I have to parse the correspondent JSON
 
     lhs >> c;
     if(c == '"'){   //parses a string, without considering spaces and tabs
@@ -881,7 +894,12 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     std::istream& STRING_PARSER(std::istream& lhs, json& element){
         std::string s;
         char c;
+        lhs >> c;   //skip "
         lhs.get(c);
+        if(c == '"'){
+            element.set_string("");
+            return lhs;        //empty string
+        }
         do{
             while(c == 92){ //in this way if there's a '\\\\"' no matter how many \ there are it is working
                 s += c;
@@ -890,7 +908,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
             s += c;
             lhs.get(c);
         }while(c != '"');
-        s += c;
         while(s.back() == ',' || s.back() == ']' || s.back() == '}'){
             lhs.putback(s.back());
             s.pop_back();
@@ -900,10 +917,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         return lhs;
     }
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 
 void LIST_PRINT(std::ostream& lhs, json const& rhs){
     json::const_list_iterator it = rhs.begin_list();
@@ -915,12 +928,8 @@ void LIST_PRINT(std::ostream& lhs, json const& rhs){
         if(it != rhs.end_list()){
             lhs << ",";
         }
-<<<<<<< Updated upstream
-        lhs << std::endl;
-=======
         if(layer >= 0)
             lhs << std::endl;
->>>>>>> Stashed changes
     }
 }
 
@@ -928,15 +937,6 @@ void LIST_PRINT(std::ostream& lhs, json const& rhs){
 void DICT_PRINT(std::ostream& lhs, json const& rhs){
     json::const_dictionary_iterator it = rhs.begin_dictionary();
     while(it != rhs.end_dictionary()){
-<<<<<<< Updated upstream
-        for(int i = layer; i >= 0; i--)
-            lhs << "    ";
-        std::cout << BLUE;
-        lhs << it->first;
-        lhs << "\"";
-        std::cout << DEFAULT;
-        lhs << " : ";
-=======
         for(int i = layer; i >= 0; i--){
             lhs << "    ";
         }
@@ -945,7 +945,6 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
         lhs << it->first;
         std::cout << DEFAULT;
         lhs << "\" : ";
->>>>>>> Stashed changes
         lhs << it->second;
         std::cout << DEFAULT;
         it++;
@@ -953,19 +952,11 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
         if(it != rhs.end_dictionary()){
             lhs << ",";
         }
-<<<<<<< Updated upstream
-        lhs << std::endl;
-    }
-}
-
-
-=======
         if(layer >= 0)
             lhs << std::endl;
     }
 }
 
->>>>>>> Stashed changes
 std::string to_lower_case(std::string const& str){
     std::string out;
     for (auto c : str) {
@@ -994,24 +985,8 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
                 std::cout << DEFAULT;
             }else{
                 if(rhs.is_string()){
-<<<<<<< Updated upstream
-                    if(to_lower_case(rhs.get_string()) == "\"simone\""){
-                        std::string str = rhs.get_string();
-                        std::cout << GREEN;
-                        lhs << str[0];
-                        for(int i = 0; i < 6; i++){
-                            std::cout << colors[i];
-                            lhs << str[i+1];
-                        }
-                        std::cout << GREEN;
-                        lhs << str[7];
-                    }else{
-                        std::cout << GREEN;
-                        lhs << rhs.get_string();
-                        std::cout << DEFAULT;
-                    }
+
                     
-=======
                     if(to_lower_case(rhs.get_string()) == "simone"){
                         std::string str = rhs.get_string();
                         lhs << '\"';
@@ -1029,25 +1004,18 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
                         std::cout << DEFAULT;
                         lhs << '\"';
                     }
->>>>>>> Stashed changes
+
                 }else{
                     if(rhs.is_list()){
                         bool isEmpty = (rhs.begin_list() == nullptr);
                         lhs << "[";
                         if(!isEmpty) lhs << std::endl;
                         layer++;
-<<<<<<< Updated upstream
-                        lhs << std::endl;
-                        LIST_PRINT(lhs, rhs);
-                        for(int i = layer; i > 0; i--)
-                            lhs << "    ";
-=======
                         LIST_PRINT(lhs, rhs);
                         if(!isEmpty){
                             for(int i = layer; i > 0; i--)   //prints the indentation for the last ]
                                 lhs << "    ";
                         }
->>>>>>> Stashed changes
                         lhs << "]";
                         layer--;
                     }else{
@@ -1058,18 +1026,11 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
                                 lhs << std::endl;
                             } 
                             layer++;
-<<<<<<< Updated upstream
-                            lhs << std::endl;
-                            DICT_PRINT(lhs, rhs);
-                            for(int i = layer; i > 0; i--)
-                                lhs << "    ";
-=======
                             DICT_PRINT(lhs, rhs);
                             if(!isEmpty){
                                 for(int i = layer; i > 0; i--)    //prints the indentation for the last }
                                     lhs << "    ";
                             }
->>>>>>> Stashed changes
                             lhs << "}";
                             layer--;
                         }
@@ -1101,58 +1062,20 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
 }
 
 
-int main(){
-
-    json test;
-    try{
-
-        std::cin >> test;
-        //(*(++test.begin_list()))["prima chiave"] = "test";
-    }
-    catch(json_exception error){
-        std::cout << std::endl << "-----------------------------------------"
-        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
-    }
-    std::cout << "ok" << std::endl;
-    try{
-        #ifdef _WIN32
-        system("cls");
-        #elif __unix__
-        system("clear");
-        #endif
-
-        std::cout << test;
-    }
-    catch(json_exception error){
-        std::cout << std::endl << "-----------------------------------------"
-        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
-    }
-
-    #ifdef _WIN32
-    system("pause");
-    #endif
-
-    return 0;
-}
-
 
 int main(){
 
     json test;
-    json z;
-    std::cin >> z;
-    std::cout << std::endl;
-    std::cout << z;
-    std::cout << std::endl;
-    try{
-        std::cin >> test;
-        test["terza chiave"] = z;
-    }
-    catch(json_exception error){
-        std::cout << std::endl << "-----------------------------------------"
-        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
-    }
-    try{
+    std::fstream test_file;
+    test_file.open("test_file", std::ios::in);
+
+    
+    test_file >> test;
+    test_file.close();
+    
+    
+    
+        /*
         #ifdef _WIN32
         system("cls");
         #elif __unix__
@@ -1160,14 +1083,10 @@ int main(){
         #elif __APPLE__
         system("clear");
         #endif
-
-        std::cout << test;
-    }
-    catch(json_exception error){
-        std::cout << std::endl << "-----------------------------------------"
-        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
-    }
-
+*/
+    std::cout << test;
+    
+    
     #ifdef _WIN32
     system("pause");
     #endif
