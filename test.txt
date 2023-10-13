@@ -29,11 +29,13 @@
     "doppio \\" escape"
 ]
 
+
+{"c" : 5, "d" : 6}
 [
     1,
     {
         "prima chiave" : {"c" : 5, "d" : 6},
-        "seconda chiave" : [4.12,2,true],
+        "seconda chiave" : [1,true],
         "terza chiave" : "una stringa",
         "quarta chiave" : {"a" : 4, "b" : [4,5]}
     },
@@ -48,7 +50,11 @@
                 "className":[{
                     "associatedDrug":[{
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                         "name":"simone",
+=======
+                        "name":"sIMoNe",
+>>>>>>> Stashed changes
                         "dose":true,
                         "strength":500
                     }],
@@ -98,3 +104,5 @@
 }
 ]
 }
+
+
