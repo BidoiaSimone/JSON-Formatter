@@ -44,7 +44,10 @@ struct json::impl{
     dict* dict_tail;            //dictionary tail
 
 };
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 int layer = -1;
     std::istream& LIST_PARSER(std::istream& lhs, json& rhs);
     std::istream& DICT_PARSER(std::istream& lhs, json& rhs);
@@ -897,7 +900,10 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         return lhs;
     }
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 
 void LIST_PRINT(std::ostream& lhs, json const& rhs){
     json::const_list_iterator it = rhs.begin_list();
@@ -909,7 +915,12 @@ void LIST_PRINT(std::ostream& lhs, json const& rhs){
         if(it != rhs.end_list()){
             lhs << ",";
         }
+<<<<<<< Updated upstream
         lhs << std::endl;
+=======
+        if(layer >= 0)
+            lhs << std::endl;
+>>>>>>> Stashed changes
     }
 }
 
@@ -917,6 +928,7 @@ void LIST_PRINT(std::ostream& lhs, json const& rhs){
 void DICT_PRINT(std::ostream& lhs, json const& rhs){
     json::const_dictionary_iterator it = rhs.begin_dictionary();
     while(it != rhs.end_dictionary()){
+<<<<<<< Updated upstream
         for(int i = layer; i >= 0; i--)
             lhs << "    ";
         std::cout << BLUE;
@@ -924,17 +936,36 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
         lhs << "\"";
         std::cout << DEFAULT;
         lhs << " : ";
+=======
+        for(int i = layer; i >= 0; i--){
+            lhs << "    ";
+        }
+        lhs << "\"";
+        std::cout << BLUE;
+        lhs << it->first;
+        std::cout << DEFAULT;
+        lhs << "\" : ";
+>>>>>>> Stashed changes
         lhs << it->second;
+        std::cout << DEFAULT;
         it++;
         std::cout << DEFAULT;
         if(it != rhs.end_dictionary()){
             lhs << ",";
         }
+<<<<<<< Updated upstream
         lhs << std::endl;
     }
 }
 
 
+=======
+        if(layer >= 0)
+            lhs << std::endl;
+    }
+}
+
+>>>>>>> Stashed changes
 std::string to_lower_case(std::string const& str){
     std::string out;
     for (auto c : str) {
@@ -963,6 +994,7 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
                 std::cout << DEFAULT;
             }else{
                 if(rhs.is_string()){
+<<<<<<< Updated upstream
                     if(to_lower_case(rhs.get_string()) == "\"simone\""){
                         std::string str = rhs.get_string();
                         std::cout << GREEN;
@@ -979,24 +1011,65 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
                         std::cout << DEFAULT;
                     }
                     
+=======
+                    if(to_lower_case(rhs.get_string()) == "simone"){
+                        std::string str = rhs.get_string();
+                        lhs << '\"';
+                        std::cout << GREEN;
+                        for(int i = 0; i < 6; i++){
+                            std::cout << colors[i];
+                            lhs << str[i];
+                        }
+                        std::cout << DEFAULT;
+                        lhs << '\"';
+                    }else{
+                        lhs << '\"';
+                        std::cout << GREEN;
+                        lhs << rhs.get_string();
+                        std::cout << DEFAULT;
+                        lhs << '\"';
+                    }
+>>>>>>> Stashed changes
                 }else{
                     if(rhs.is_list()){
+                        bool isEmpty = (rhs.begin_list() == nullptr);
                         lhs << "[";
+                        if(!isEmpty) lhs << std::endl;
                         layer++;
+<<<<<<< Updated upstream
                         lhs << std::endl;
                         LIST_PRINT(lhs, rhs);
                         for(int i = layer; i > 0; i--)
                             lhs << "    ";
+=======
+                        LIST_PRINT(lhs, rhs);
+                        if(!isEmpty){
+                            for(int i = layer; i > 0; i--)   //prints the indentation for the last ]
+                                lhs << "    ";
+                        }
+>>>>>>> Stashed changes
                         lhs << "]";
                         layer--;
                     }else{
                         if(rhs.is_dictionary()){
+                            bool isEmpty = (rhs.begin_dictionary() == nullptr);
                             lhs << "{";
+                            if(!isEmpty){
+                                lhs << std::endl;
+                            } 
                             layer++;
+<<<<<<< Updated upstream
                             lhs << std::endl;
                             DICT_PRINT(lhs, rhs);
                             for(int i = layer; i > 0; i--)
                                 lhs << "    ";
+=======
+                            DICT_PRINT(lhs, rhs);
+                            if(!isEmpty){
+                                for(int i = layer; i > 0; i--)    //prints the indentation for the last }
+                                    lhs << "    ";
+                            }
+>>>>>>> Stashed changes
                             lhs << "}";
                             layer--;
                         }
@@ -1063,5 +1136,42 @@ int main(){
 }
 
 
+int main(){
 
+    json test;
+    json z;
+    std::cin >> z;
+    std::cout << std::endl;
+    std::cout << z;
+    std::cout << std::endl;
+    try{
+        std::cin >> test;
+        test["terza chiave"] = z;
+    }
+    catch(json_exception error){
+        std::cout << std::endl << "-----------------------------------------"
+        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
+    }
+    try{
+        #ifdef _WIN32
+        system("cls");
+        #elif __unix__
+        system("clear");
+        #elif __APPLE__
+        system("clear");
+        #endif
+
+        std::cout << test;
+    }
+    catch(json_exception error){
+        std::cout << std::endl << "-----------------------------------------"
+        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
+    }
+
+    #ifdef _WIN32
+    system("pause");
+    #endif
+
+    return 0;
+}
 

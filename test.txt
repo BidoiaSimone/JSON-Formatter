@@ -47,6 +47,7 @@
             "medicationsClasses":[{
                 "className":[{
                     "associatedDrug":[{
+<<<<<<< Updated upstream
                         "name":"simone",
                         "dose":true,
                         "strength":500
@@ -55,17 +56,35 @@
                         "name":"somethingElse",
                         "dose":null,
                         "strength":500
+=======
+                        "name":"asprin",
+                        "dose":"ciao",
+                        "strength":"500 mg"
+                    }],
+                    "associatedDrug#2":[{
+                        "name":"somethingElse",
+                        "dose":"ciao",
+                        "strength":"500 mg"
+>>>>>>> Stashed changes
                     }]
                 }],
                 "className2":[{
                     "associatedDrug":[{
                         "name":"asprin",
+<<<<<<< Updated upstream
                         "dose":null,
+=======
+                        "dose":"jfis",
+>>>>>>> Stashed changes
                         "strength":"500 mg"
                     }],
                     "associatedDrug#2":[{
                         "name":"somethingElse",
+<<<<<<< Updated upstream
                         "dose":null,
+=======
+                        "dose":"simone",
+>>>>>>> Stashed changes
                         "strength":"500 mg"
                     }]
                 }]
