@@ -5,6 +5,7 @@ static constexpr double inf = std::numeric_limits<double>::max();
 struct json::impl{
     
     std::string str;            //string
+    bool is_string;
     double num;                 //double
     bool statement;             //bool
     bool null;                  //null
@@ -41,14 +42,13 @@ struct json::impl{
     void LIST_PRINT(std::ostream& lhs, json const& rhs);//is required const for the output and input signatures
     void DICT_PRINT(std::ostream& lhs, json const& rhs);
 
-    void INSIDE_LIST_PRINT(std::ostream& lhs, json const& rhs); //prints a list inside of a list or a dict
-    void INSIDE_dict_PRINT(std::ostream& lhs, json const& rhs); //prints a dict inside of a list or a dict
 
 //CHECKED
 json::json(){       //allocates a null json-type object
     pimpl = new impl;
 
     pimpl->str = "";
+    pimpl->is_string = false;
     pimpl->num = inf;
     pimpl->statement = false;   //value is not relevant since I'll be checking null
     pimpl->null = true;         //if this is true then statement is not relevant
@@ -66,6 +66,7 @@ json::json(json const& j){          //copy constructor
     pimpl = new impl;
 
     pimpl->str = j.pimpl->str;
+    pimpl->is_string = j.pimpl->is_string;
     pimpl->num = j.pimpl->num;
     pimpl->statement = j.pimpl->statement;
     pimpl->null = j.pimpl->null;
@@ -97,14 +98,12 @@ json::json(json const& j){          //copy constructor
 }
 
 //CHECKED 
-//(try moving the just the impl* (pimpl) without touching anything)
 json::json(json&& j){       //move constructor
     if(this != &j){
         pimpl = j.pimpl;
         j.pimpl = nullptr;
         delete j.pimpl;
     }
-
 }
 
 //IF SET_NULL WORKS THEN IT'S OK
@@ -116,10 +115,10 @@ json::~json(){
 //CHECKED
 json& json::operator=(json const& j){
     if(this != &j){        //if this and j are not the same obj
-        set_null();        //clear this
+        if(!is_null()) set_null();        //clear this
 
         if(j.is_list()){
-            pimpl->is_list = true;
+            set_list();
             impl::list* temp = j.pimpl->list_head;
             while(temp != nullptr){
                 push_back(temp->info);
@@ -127,7 +126,7 @@ json& json::operator=(json const& j){
             }
         }else{
             if(j.is_dictionary()){
-                pimpl->is_dict = true;
+                set_dictionary();
                 impl::dict* temp = j.pimpl->dict_head;
                 while(temp != nullptr){
                     insert(temp->info);
@@ -139,6 +138,9 @@ json& json::operator=(json const& j){
         pimpl->num = j.pimpl->num;
         pimpl->null = j.pimpl->null;
         pimpl->str = j.pimpl->str;
+        pimpl->is_string = j.pimpl->is_string;
+        pimpl->is_list = j.pimpl->is_list;
+        pimpl->is_dict = j.pimpl->is_dict;
     }
     return *this;
 }
@@ -157,13 +159,12 @@ json& json::operator=(json&& j){            //move operator
 
 //CHECKED
 bool json::is_list() const{
-    
     bool check;
     check = pimpl->is_list      && 
             !(pimpl->is_dict)   &&
             !(pimpl->null)      &&
             pimpl->num == inf   &&
-            pimpl->str == "";    
+            !(pimpl->is_string);
     return check;
 }
 //CHECKED
@@ -173,7 +174,7 @@ bool json::is_dictionary() const{
             pimpl->is_dict      &&
             !(pimpl->null)      &&
             pimpl->num == inf   &&
-            pimpl->str == "";
+            !(pimpl->is_string);
     return check;
 }
 //CHECKED
@@ -183,7 +184,7 @@ bool json::is_string() const{
             !(pimpl->is_dict)   &&
             !(pimpl->null)      &&
             pimpl->num == inf   &&
-            pimpl->str != "";
+            pimpl->is_string;
     return check;
 }
 //CHECKED
@@ -193,7 +194,7 @@ bool json::is_number() const{
             !(pimpl->is_dict)   &&
             !(pimpl->null)      &&
             pimpl->num != inf   &&
-            pimpl->str == "";
+            !(pimpl->is_string);
     return check;
 }
 //CHECKED
@@ -203,7 +204,7 @@ bool json::is_bool() const{
             !(pimpl->is_dict)   &&
             !(pimpl->null)      &&
             pimpl->num == inf   &&
-            pimpl->str == "";
+            !(pimpl->is_string);
     return check;
 }
 //CHECKED
@@ -213,7 +214,7 @@ bool json::is_null() const{
             !(pimpl->is_dict)   &&
             pimpl->null         &&
             pimpl->num == inf   &&
-            pimpl->str == "";
+            !(pimpl->is_string);
     return check;
 }
 
@@ -236,7 +237,7 @@ json const& json::operator[](std::string const& key) const{
 //CHECKED
 json& json::operator[](std::string const& key){
     if(!is_dictionary()){
-        throw json_exception{"at: op[]const: obj is not a dict"};
+        throw json_exception{"at: op[]: obj is not a dict"};
     }else{
         impl::dict* ptr = pimpl->dict_head;
         while(ptr != nullptr){
@@ -246,8 +247,8 @@ json& json::operator[](std::string const& key){
             ptr = ptr->next;
         }
         json nuovo; //if it doesn't find the key it makes a new node 
-        insert(std::pair<std::string, json> {key, nuovo});//and returns a reference to it 
-        return ptr->next->info.second;//how the task required
+        insert(std::pair<std::string, json> {key, nuovo});//and returns a reference to it
+        return pimpl->dict_tail->info.second;//how the task required
     }
 }
 //COPIED FROM SLIDES
@@ -541,6 +542,7 @@ void json::set_null(){
     if(!is_null()){
         //clears an impl
         pimpl->str = "";
+        pimpl->is_string = false;
         pimpl->num = inf;
         pimpl->null = true;
         pimpl->is_list = false;
@@ -562,7 +564,6 @@ void json::set_null(){
         pimpl->dict_head = nullptr;
         pimpl->dict_tail = nullptr;
     }
-    assert(is_null());
 }
 
 //CHECKED
@@ -570,11 +571,11 @@ void json::set_string(std::string const& s){
     if(is_string()){
         pimpl->str = s;
     }else{
-        set_null();
+        if(!is_null()) set_null();
+        pimpl->is_string = true;
         pimpl->null = false;
         pimpl->str = s;
     }
-    assert(is_string());
 }
 
 //CHECKED   
@@ -582,11 +583,10 @@ void json::set_bool(bool b){
     if(is_bool()){
         pimpl->statement = b;
     }else{
-        set_null();
+        if(!is_null()) set_null();
         pimpl->null = false;
         pimpl->statement = b;
     }
-    assert(is_bool());
 }
 
 //CHECKED
@@ -594,27 +594,24 @@ void json::set_number(double x){
     if(is_number()){
         pimpl->num = x;
     }else{
-        set_null();
+        if(!is_null()) set_null();
         pimpl->null = false;
         pimpl->num = x;
     }
-    assert(is_number());
 }
 
 //CHECKED
 void json::set_list(){
-    set_null();
+    if(!is_null()) set_null();
     pimpl->is_list = true;
     pimpl->null = false;
-    assert(is_list());
 }
 
 //CHECKED
 void json::set_dictionary(){
-    set_null();
+    if(!is_null()) set_null();
     pimpl->is_dict = true;
     pimpl->null = false;
-    assert(is_dictionary());
 }
 
 //USED PROF'S SLIDES
@@ -626,12 +623,11 @@ void json::push_front(json const& x) {
             return;
         }
         pimpl->list_head = new impl::list{x, pimpl->list_head};
-    }else   throw json_exception{"at: push_front: obj is not a list"};
+    }else throw json_exception{"at: push_front: obj is not a list"};
 }
     
 //USED PROF'S SLIDES
 void json::push_back(json const& x) {
-    assert(is_list());
     if(is_list()){
         if(pimpl->list_head == nullptr){
             push_front(x);
@@ -644,25 +640,26 @@ void json::push_back(json const& x) {
 
 //USED PROF'S SLIDES
 void json::insert(std::pair<std::string, json> const& x){
-
     if(is_dictionary()){
         if(pimpl->dict_head == nullptr){
             pimpl->dict_head = new impl::dict{x, nullptr};
             pimpl->dict_tail = pimpl->dict_head;
         }else{
-           pimpl->dict_tail->next = new impl::dict{x, nullptr}; 
+            pimpl->dict_tail->next = new impl::dict{x, nullptr}; 
             pimpl->dict_tail = pimpl->dict_tail->next;
         } 
     }else throw json_exception{"at: insert: obj is not a dict"};
 }
 
 
-//can't use weitch because the statements are not literal
-    std::istream& LIST_PARSER(std::istream& lhs, json& rhs){
+//can't use switch because the statements are not literal
+std::istream& LIST_PARSER(std::istream& lhs, json& rhs){
     char c;
-    lhs >> c;       //reads the first char to see what it needs to parse 
-    if(c == ']') return lhs;    
-
+    lhs >> c;       //reads the first char after the opening [ to see what it needs to parse 
+    if(c == ']'){       //empty list
+        lhs.putback(c);
+        return lhs;    
+    }
     if(c == '"'){   //parses a string, without considering spaces and tabs
         lhs.putback(c);
         json element;
@@ -670,7 +667,7 @@ void json::insert(std::pair<std::string, json> const& x){
         rhs.push_back(element);
     }else{
 
-        if(c >= 48 && c <= 57){ //parse a double
+        if(c >= 48 && c <= 57 || c == '+' || c == '-'){ //parse a double
             lhs.putback(c);
             json element;
             NUMBER_PARSER(lhs, element);
@@ -696,6 +693,7 @@ void json::insert(std::pair<std::string, json> const& x){
                         element.set_list();
                         LIST_PARSER(lhs, element);    //reads the next list from input and puts it into element
                         rhs.push_back(element);
+                        lhs >> c;
                     }else{
 
                         if(c == '{'){   //parse a dictionary
@@ -703,6 +701,7 @@ void json::insert(std::pair<std::string, json> const& x){
                             element.set_dictionary();
                             DICT_PARSER(lhs, element);
                             rhs.push_back(element);
+                            lhs >> c;
                         }
                     }
                 }
@@ -711,6 +710,8 @@ void json::insert(std::pair<std::string, json> const& x){
     }
 
         lhs >> c;
+        if(c == ']')
+            lhs.putback(c);
         if(c == ',')
             LIST_PARSER(lhs, rhs);
         
@@ -721,7 +722,10 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
     char c;
     std::string key;
     lhs >> c;   //reads  the "
-    if(c == '}') return lhs;
+    if(c == '}'){
+        lhs.putback(c);
+        return lhs;
+    } 
     lhs >> c;   //skips the "
     do{
         while(c == 92){
@@ -747,7 +751,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         rhs.insert(info);
 
     }else{
-        if(c >= 48 && c <= 57){
+        if(c >= 48 && c <= 57 || c == '+' || c == '-'){
             lhs.putback(c);
             json element;
             NUMBER_PARSER(lhs, element);
@@ -778,6 +782,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                         LIST_PARSER(lhs, element); //populates element with the list in lhs
                         std::pair<std::string, json> info{key, element};
                         rhs.insert(info);
+                        lhs >> c;
 
                     }else{
                         if(c == '{'){
@@ -787,6 +792,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                             DICT_PARSER(lhs, element); //populates element with the dictionary in lhs
                             std::pair<std::string, json> info{key, element};
                             rhs.insert(info);
+                            lhs >> c;   //must be the }
                         }
                     }
                 }
@@ -794,6 +800,8 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         }
     }
     lhs >> c;
+    if(c == '}')
+            lhs.putback(c);
     if(c == ',')
         DICT_PARSER(lhs, rhs);
 
@@ -820,8 +828,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                 throw json_exception{"at: BOOLEAN_PARSER input: obj read is neither true or false " + s};
             }
         }
-            assert(element.is_bool());
-        
         return lhs;
     }
 
@@ -829,7 +835,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         double num;
         lhs >> num;
         element.set_number(num);        //of course does not read eventual , } ]
-            assert(element.is_number());
         return lhs;
     }
 
@@ -844,7 +849,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         }
         if(s == "null"){
             element.set_null();
-                assert(element.is_null());
         }else{
             throw json_exception{"at: NULL_PARSER input: obj read is not a null " + s};
         }
@@ -856,6 +860,10 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         char c;
         lhs >> c;   //consumes '"'
         lhs.get(c);
+        if(c == '"'){
+            element.set_string("");
+            return lhs;
+        }
         do{
             while(c == 92){ //in this way if there's a '\\\\"' no matter how many \ there are it is working
                 s += c;
@@ -870,7 +878,6 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
             s.pop_back();
         }
         element.set_string(s);
-            assert(element.is_string());
         return lhs;
     }
 
@@ -903,7 +910,7 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
         lhs << it->second;
         it++;
         if(it != rhs.end_dictionary()){
-            lhs << ",";
+            lhs << ", ";
         }
         if(layer == 0)
             lhs << std::endl;
@@ -912,7 +919,6 @@ void DICT_PRINT(std::ostream& lhs, json const& rhs){
 
 //OUTPUT
 std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs from rhs and puts them into lhs (lhs << rhs)
-
     if(rhs.is_bool()){
         bool statement = rhs.get_bool();    //if you just do lhs << rhs.get_bool() it prints 1/0
         if(statement)
@@ -955,7 +961,6 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
             }
         }
     }
-    
     return lhs;
 }
 
@@ -972,12 +977,24 @@ std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs 
             DICT_PARSER(lhs, rhs); //must read a dictionary from std::input and put it in rhs
         }    
     }
-
-    
     return lhs;
 }
 
+int main(){
+    try{
+
+    json j;
+    std::cin >> j;
+    std::cout << j;
 
 
+    
+    }
+    catch(json_exception error){
+        std::cout << std::endl << "-----------------------------------------"
+        << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
+    }
 
+    return 0;
+}
 

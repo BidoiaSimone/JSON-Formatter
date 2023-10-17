@@ -1,6 +1,6 @@
 {
     "prima chiave" : 5,
-    "seconda chiave" : [4.12,2,{"ciao" : 1, "bye" : null, "third" : []}],
+    "seconda chiave" : [4.12,2,{"ciao" : 1, "bye" : null, "third" : [{}]}],
     "terza chiave" : "una stringa",
     "quarta chiave" : {}
 }
@@ -12,7 +12,7 @@
     true,
     null, 
     [],
-    {"prima chiave" : "ciao", "seconda chaive" : [1,true,34.5]}
+    {"prima chiave" : "ciao", " " : [1,true,{},-34.5]}
 ]
 
 {
@@ -29,13 +29,15 @@
     "doppio \\" escape"
 ]
 
+{"c":5, "d":6}
+
 [
     1,
     {
-        "prima chiave" : {"c" : 5, "d" : 6},
-        "seconda chiave" : [],
-        "terza chiave" : "una stringa",
-        "quarta chiave" : {"a" : 4, "b" : [4,5]}
+        "prima chiave" : 5,
+        "seconda chiave" : [+12.234, -3254],
+        "terza chiave" : "\\\\\\\\\\\\\"",
+        "quarta chiave" : {"a" : -4, "b" : [-4,-5]}
     },
     3
 ]
