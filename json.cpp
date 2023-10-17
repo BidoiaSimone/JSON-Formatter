@@ -1,6 +1,21 @@
 #include "json.hpp"
+#include <fstream>
 
 static constexpr double inf = std::numeric_limits<double>::max();
+
+int layer = 0;
+
+#define DEFAULT 	"\033[0m"
+#define BLACK		"\033[0;30m"
+#define RED 		"\033[0;31m"		
+#define GREEN		"\033[0;32m"
+#define YELLOW		"\033[0;33m"
+#define BLUE		"\033[0;34m"
+#define PURPLE		"\033[0;35m"
+#define CYAN		"\033[0;36m"
+#define WHITE		"\033[0;37m"
+
+std::vector<std::string> colors={RED, GREEN, YELLOW, BLUE, PURPLE, CYAN};
 
 struct json::impl{
     
@@ -41,6 +56,10 @@ struct json::impl{
 
     void LIST_PRINT(std::ostream& lhs, json const& rhs);//is required const for the output and input signatures
     void DICT_PRINT(std::ostream& lhs, json const& rhs);
+
+    void MINIFIER(std::ostream& lhs, json const& rhs);
+
+    std::string to_lower_case(std::string str);
 
 
 //CHECKED
@@ -667,7 +686,7 @@ std::istream& LIST_PARSER(std::istream& lhs, json& rhs){
         rhs.push_back(element);
     }else{
 
-        if(c >= 48 && c <= 57 || c == '+' || c == '-'){ //parse a double
+        if((c >= 48 && c <= 57) || c == '+' || c == '-'){ //parse a double
             lhs.putback(c);
             json element;
             NUMBER_PARSER(lhs, element);
@@ -691,7 +710,9 @@ std::istream& LIST_PARSER(std::istream& lhs, json& rhs){
                     if(c == '['){   //parse a list
                         json element;
                         element.set_list();
+                        layer++;
                         LIST_PARSER(lhs, element);    //reads the next list from input and puts it into element
+                        layer--;
                         rhs.push_back(element);
                         lhs >> c;
                     }else{
@@ -699,7 +720,9 @@ std::istream& LIST_PARSER(std::istream& lhs, json& rhs){
                         if(c == '{'){   //parse a dictionary
                             json element;
                             element.set_dictionary();
+                            layer++;
                             DICT_PARSER(lhs, element);
+                            layer--;
                             rhs.push_back(element);
                             lhs >> c;
                         }
@@ -751,7 +774,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         rhs.insert(info);
 
     }else{
-        if(c >= 48 && c <= 57 || c == '+' || c == '-'){
+        if((c >= 48 && c <= 57) || c == '+' || c == '-'){
             lhs.putback(c);
             json element;
             NUMBER_PARSER(lhs, element);
@@ -779,7 +802,9 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                         //parse list
                         json element;
                         element.set_list();
+                        layer++;
                         LIST_PARSER(lhs, element); //populates element with the list in lhs
+                        layer--;
                         std::pair<std::string, json> info{key, element};
                         rhs.insert(info);
                         lhs >> c;
@@ -789,7 +814,9 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
                             //parse dictionary
                             json element;
                             element.set_dictionary();
+                            layer++;
                             DICT_PARSER(lhs, element); //populates element with the dictionary in lhs
+                            layer--;
                             std::pair<std::string, json> info{key, element};
                             rhs.insert(info);
                             lhs >> c;   //must be the }
@@ -881,20 +908,21 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         return lhs;
     }
 
-int layer = -1;
+
 
 void LIST_PRINT(std::ostream& lhs, json const& rhs){
     json::const_list_iterator it = rhs.begin_list();
     while(it != rhs.end_list()){
-        if(layer == 0)
+
+        for(int i = layer; i > 0; i--){
             lhs << "    ";
+        }
         lhs << *it;     //right here *it is a json so it will recursively call the output operator
         it++;
         if(it != rhs.end_list()){
             lhs << ",";
         }
-        if(layer == 0)
-            lhs << std::endl;
+        lhs << std::endl;
     }
 }
 
@@ -902,18 +930,20 @@ void LIST_PRINT(std::ostream& lhs, json const& rhs){
 void DICT_PRINT(std::ostream& lhs, json const& rhs){
     json::const_dictionary_iterator it = rhs.begin_dictionary();
     while(it != rhs.end_dictionary()){
-        if(layer == 0)
+        for(int i = layer; i > 0; i--){
             lhs << "    ";
+        }
         lhs << "\"";
+        lhs << BLUE;
         lhs << it->first;
+        lhs << DEFAULT;
         lhs << "\" : ";
         lhs << it->second;
         it++;
         if(it != rhs.end_dictionary()){
             lhs << ", ";
         }
-        if(layer == 0)
-            lhs << std::endl;
+        lhs << std::endl;
     }
 }
 
@@ -922,39 +952,49 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
     if(rhs.is_bool()){
         bool statement = rhs.get_bool();    //if you just do lhs << rhs.get_bool() it prints 1/0
         if(statement)
-            lhs << "true";
-        else lhs << "false";
+            lhs << PURPLE << "true" << DEFAULT;
+        else lhs << PURPLE << "false" << DEFAULT;
     }else{
         if(rhs.is_null()){
             lhs << "null";
         }else{
             if(rhs.is_number()){
-                lhs << rhs.get_number();
+                lhs << RED << rhs.get_number() << DEFAULT;
             }else{
                 if(rhs.is_string()){
-                    lhs << '\"' << rhs.get_string() << '\"';
+                    if(to_lower_case(rhs.get_string()) == "simone"){
+                        lhs << '\"';
+                        for(int i = 0; i < 6; i++){
+                            lhs << colors[i];
+                            lhs << rhs.get_string()[i];
+                        }
+                        lhs << DEFAULT;
+                        lhs << '\"';
+                    }else{
+                    lhs << '\"' << GREEN << rhs.get_string() << DEFAULT << '\"';
+                    }
                 }else{
                     if(rhs.is_list()){
                         lhs << "[";
                         layer++;
-                        if(layer == 0)
-                            lhs << std::endl;
+                        lhs << std::endl;
                         LIST_PRINT(lhs, rhs);
                         layer--;
+                        for(int i = layer; i > 0; i--){
+                            lhs << "    ";
+                        }
                         lhs << "]";
-                        if(layer == -1)
-                            lhs << std::endl;
                     }else{
                         if(rhs.is_dictionary()){
                             lhs << "{";
                             layer++;
-                            if(layer == 0)
-                                lhs << std::endl;
+                            lhs << std::endl;
                             DICT_PRINT(lhs, rhs);
                             layer--;
+                            for(int i = layer; i > 0; i--){
+                                lhs << "    ";
+                            }
                             lhs << "}";
-                            if(layer == -1)
-                                lhs << std::endl;
                         }
                     }
                 }
@@ -965,27 +1005,42 @@ std::ostream& operator<<(std::ostream& lhs, json const& rhs){   //takes inputs f
 }
 
 //INPUT
-std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs >> and puts them into rhs (lhs >> rhs)
+std::istream& operator>>(std::istream& lhs, json& rhs){ //takes inputs from lhs >> and 
+                                                        //puts them into rhs (lhs >> rhs)
     char c;
     lhs >> c;
     if(c == '['){   //is a list
-        rhs.set_list(); //creates an empty list, i need to add the members with push_back, this is handled by LIST()
+        rhs.set_list(); //creates an empty list, i need to add 
+                        //the members with push_back, this is handled by LIST()
         LIST_PARSER(lhs, rhs); //must read a list from std::input and put it in rhs
+        lhs >> c;   //reads the closing ] from input
     }else{
         if(c == '{'){   //is a dictionary
             rhs.set_dictionary();
             DICT_PARSER(lhs, rhs); //must read a dictionary from std::input and put it in rhs
+            lhs >> c;   //reads the closing } from input
         }    
     }
     return lhs;
+}
+
+std::string to_lower_case(std::string str){
+    std::string res;
+    for(auto e : str)  
+        res+= (e >= 65 && e <= 90) ? e+32 : e;   //scritta da marius 
+    return res;
 }
 
 int main(){
     try{
 
     json j;
-    std::cin >> j;
-    std::cout << j;
+    json j2;
+    json j3;
+    std::ifstream f("input.txt", std::ios::in);
+    std::ofstream o("output.txt", std::ios::out);
+    f >> j;
+    std::cout << j << std::endl;
 
 
     
