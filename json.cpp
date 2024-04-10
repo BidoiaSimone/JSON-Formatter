@@ -899,11 +899,8 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
             s += c;
             lhs.get(c);
         }while(c != '"');
-        if(s.back() == '"') s.pop_back();
-        while(s.back() == ',' || s.back() == ']' || s.back() == '}'){
-            lhs.putback(s.back());
-            s.pop_back();
-        }
+        
+        
         element.set_string(s);
         return lhs;
     }
@@ -1040,7 +1037,10 @@ int main(){
     std::ifstream f("input.txt", std::ios::in);
     std::ofstream o("output.txt", std::ios::out);
     f >> j;
-    std::cout << j << std::endl;
+    f >> j2;
+    std::cout << j << std::endl << "-----------------------------------------" << std::endl;
+    std::cout << j2 << std::endl << "-----------------------------------------" << std::endl;
+    std::cout << j3 << std::endl;
 
 
     
