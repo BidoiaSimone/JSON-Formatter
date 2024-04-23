@@ -1,6 +1,8 @@
 #include "../include/json.hpp"
-#include <fstream>
+#include "iterators.cpp"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedMacroInspection"
 static constexpr double inf = std::numeric_limits<double>::max();
 
 int layer = 0;
@@ -17,33 +19,49 @@ int layer = 0;
 
 std::vector<std::string> colors={RED, GREEN, YELLOW, BLUE, PURPLE, CYAN};
 
-struct json::impl{
-    
-    std::string str;            //string
+struct json::impl {
+    std::string str;
     bool is_string;
-    double num;                 //double
-    bool statement;             //bool
-    bool null;                  //null
+    double num;
+    bool statement;
+    bool null;
 //if null is true then statement doesn't matter
 
     bool is_list;           //these are required because the list or dict could exist but be empty
     bool is_dict;
-    struct list{                //list
+    struct list {
         json info;
-        list* next;
+        list *next;
     };
 
-    list* list_head;            //list head
-    list* list_tail;
+    list *list_head;
+    list *list_tail;
 
-
-    struct dict{                //dictionary
+    struct dict
+    {
         std::pair<std::string,json> info;
         dict* next;
     };
 
-    dict* dict_head;            //dictionary head
-    dict* dict_tail;            //dictionary tail
+    dict* dict_head;
+    dict* dict_tail;
+
+
+    impl()
+    {
+        str = "";
+        is_string = false;
+        num = inf;
+        statement = false;   //value is not relevant since I'll be checking null
+        null = true;         //if this is true then statement is not relevant
+        // except for is_list and is_dict that must be false to be coherent
+        is_list = false;
+        is_dict = false;
+        list_head = nullptr;
+        dict_head = nullptr;
+        list_tail = nullptr;
+        dict_tail = nullptr;
+    }
 
 };
 
@@ -64,24 +82,11 @@ struct json::impl{
 
 //CHECKED
 json::json(){       //allocates a null json-type object
-    pimpl = new impl;
-
-    pimpl->str = "";
-    pimpl->is_string = false;
-    pimpl->num = inf;
-    pimpl->statement = false;   //value is not relevant since I'll be checking null
-    pimpl->null = true;         //if this is true then statement is not relevant
-                    // except for is_list and is_dict that must be false to be coherent
-    pimpl->is_list = false;
-    pimpl->is_dict = false;
-    pimpl->list_head = nullptr;
-    pimpl->dict_head = nullptr;
-    pimpl->list_tail = nullptr;
-    pimpl->dict_tail = nullptr;
+    pimpl = new impl(); //implemented
 }
 
 //CHECKED
-json::json(json const& j){          //copy constructor
+json::json(const json& j){          //copy constructor
     pimpl = new impl;
 
     pimpl->str = j.pimpl->str;
@@ -117,7 +122,7 @@ json::json(json const& j){          //copy constructor
 }
 
 //CHECKED 
-json::json(json&& j){       //move constructor
+json::json(json&& j) noexcept{       //move constructor
     if(this != &j){
         pimpl = j.pimpl;
         j.pimpl = nullptr;
@@ -132,7 +137,7 @@ json::~json(){
 }
 
 //CHECKED
-json& json::operator=(json const& j){
+json& json::operator=(const json& j){
     if(this != &j){        //if this and j are not the same obj
         if(!is_null()) set_null();        //clear this
 
@@ -165,7 +170,7 @@ json& json::operator=(json const& j){
 }
 
 //CHECKED   
-json& json::operator=(json&& j){            //move operator
+json& json::operator=(json&& j) noexcept{            //move operator
     if(this != &j){     //if they are not the same obj
         set_null();     //clear this object
 
@@ -270,236 +275,6 @@ json& json::operator[](std::string const& key){
         return pimpl->dict_tail->info.second;//how the task required
     }
 }
-//COPIED FROM SLIDES
-/* --------------------------------------------------------------------------------------------------------------- */
-/* -----------------------------------------------vvv-iterators-vvv----------------------------------------------- */
-
-struct json::list_iterator{
-    using iterator_category = std::forward_iterator_tag;
-    using value_type = json;
-    using pointer = json*;
-    using reference = json&;
-
-    list_iterator(impl::list* ptr) : m_ptr(ptr){}
-
-    reference operator*() const{
-        return m_ptr->info;
-    }
-
-    pointer operator->() const{
-        return &(m_ptr->info);
-    }
-
-    list_iterator& operator++(){
-        m_ptr = m_ptr->next;
-        return *this;
-    }
-
-    list_iterator operator++(int /* dummy */){
-        list_iterator copy = *this;
-        m_ptr = m_ptr->next;
-        return copy;
-    }
-
-    bool operator==(list_iterator const& rhs) const{
-        return m_ptr == rhs.m_ptr;
-    }
-
-    bool operator!=(list_iterator const& rhs) const{
-        return !(*this == rhs);
-    }
-
-    operator bool() const{
-        return m_ptr;   //m_ptr != nullptr
-    }
-
-    private:
-        impl::list* m_ptr;
-};
-
-json::list_iterator json::begin_list(){
-    if(is_list()){
-        return {pimpl->list_head};
-    } throw json_exception{"at: list_it begin_list: obj is not a list"};
-}
-
-json::list_iterator json::end_list(){
-    if(is_list()){
-        return {nullptr};
-    } throw json_exception{"at: list_it end_list: obj is not a list"};
-}
-
-
-
-struct json::const_list_iterator{
-    using   iterator_category = std::forward_iterator_tag;
-    using   value_type = const json;
-    using   pointer = json const*;
-    using   reference = json const&;
-
-    const_list_iterator(impl::list* ptr) : m_ptr(ptr){}
-
-    reference operator*() const{
-        return m_ptr->info;
-    }
-
-    pointer operator->() const{
-        return &(m_ptr->info);
-    }
-
-    const_list_iterator& operator++(){
-        m_ptr = m_ptr->next;
-        return *this;
-    }
-
-    const_list_iterator operator++(int /* dummy */){
-        const_list_iterator copy = *this;
-        m_ptr = m_ptr->next;
-        return copy;
-    }
-
-    bool operator==(const_list_iterator const& rhs) const{
-        return m_ptr == rhs.m_ptr;
-    }
-
-    bool operator!=(const_list_iterator const& rhs) const{
-        return !(*this == rhs);
-    }
-
-    operator bool() const{
-        return m_ptr;   //m_ptr != nullptr
-    }
-
-    private:
-        impl::list const* m_ptr;
-
-};
-
-json::const_list_iterator json::begin_list() const{
-    if(is_list()){
-        return {pimpl->list_head};
-    } throw json_exception{"at: list_it begin_list: obj is not a list"};
-}
-
-json::const_list_iterator json::end_list() const{
-    if(is_list()){
-        return {nullptr};
-    } throw json_exception{"at: list_it end_list: obj is not a list"};
-}
-
-
-
-struct json::dictionary_iterator{
-    using iterator_category = std::forward_iterator_tag;
-    using value_type = std::pair<std::string, json>;
-    using pointer = std::pair<std::string, json>*;
-    using reference = std::pair<std::string, json>&;
-
-    dictionary_iterator(impl::dict* ptr) : m_ptr(ptr){}
-
-    reference operator*() const{
-        return m_ptr->info;
-    }
-
-    pointer operator->() const{
-        return &(m_ptr->info);
-    }
-
-    dictionary_iterator& operator++(){
-        m_ptr = m_ptr->next;
-        return *this;
-    }
-
-    dictionary_iterator operator++(int /* dummy */){
-        dictionary_iterator copy = *this;
-        m_ptr = m_ptr->next;
-        return copy;
-    }
-
-    bool operator==(dictionary_iterator const& rhs) const{
-        return m_ptr == rhs.m_ptr;
-    }
-
-    bool operator!=(dictionary_iterator const& rhs) const{
-        return !(*this == rhs);
-    }
-
-    operator bool() const{
-        return m_ptr;   //m_ptr != nullptr
-    }
-
-    private:
-        impl::dict* m_ptr;
-};
-
-json::dictionary_iterator json::begin_dictionary(){
-    if(is_dictionary()){
-        return {pimpl->dict_head};
-    } throw json_exception{"at: dict_it begin_dict: obj is not a dict"};
-}
-
-json::dictionary_iterator json::end_dictionary(){
-    if(is_dictionary()){
-        return {nullptr};
-    } throw json_exception{"at: dict_it end_dict: obj is not a dict"};
-}
-
-struct json::const_dictionary_iterator{
-    using iterator_category = std::forward_iterator_tag;
-    using value_type = const std::pair<std::string, json>;
-    using pointer = std::pair<std::string, json> const*;
-    using reference = std::pair<std::string, json> const&;
-
-    const_dictionary_iterator(impl::dict* ptr) : m_ptr(ptr){}
-
-    reference operator*() const{
-        return m_ptr->info;
-    }
-
-    pointer operator->() const{
-        return &(m_ptr->info);
-    }
-
-    const_dictionary_iterator& operator++(){
-        m_ptr = m_ptr->next;
-        return *this;
-    }
-
-    const_dictionary_iterator operator++(int /* dummy */){
-        const_dictionary_iterator copy = *this;
-        m_ptr = m_ptr->next;
-        return copy;
-    }
-
-    bool operator==(const_dictionary_iterator const& rhs) const{
-        return m_ptr == rhs.m_ptr;
-    }
-
-    bool operator!=(const_dictionary_iterator const& rhs) const{
-        return !(*this == rhs);
-    }
-
-    operator bool() const{
-        return m_ptr;   //m_ptr != nullptr
-    }
-
-    private:
-        impl::dict const* m_ptr;
-};
-
-json::const_dictionary_iterator json::begin_dictionary() const{
-    if(is_dictionary()){
-        return {pimpl->dict_head};
-    } throw json_exception{"at: dict_it begin_dict: obj is not a dict"};
-}
-
-json::const_dictionary_iterator json::end_dictionary() const{
-    if(is_dictionary()){
-        return {nullptr};
-    } throw json_exception{"at: dict_it end_dict: obj is not a dict"};
-}
-/* -----------------------------------------------^^^-iterators-^^^----------------------------------------------- */
-/* --------------------------------------------------------------------------------------------------------------- */
 
 
 //CHECKED
@@ -836,7 +611,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
 }
 
 
-    std::istream& BOOLEAN_PARSER(std::istream& lhs, json& element){
+    std::istream& BOOLEAN_PARSER(std::istream& lhs, json& rhs){
         std::string s;
         char c;
         char peek = lhs.peek();
@@ -847,10 +622,10 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
             peek = lhs.peek();
         }
         if(s == "true"){ 
-            element.set_bool(true);
+            rhs.set_bool(true);
         }else{
             if(s == "false"){
-                element.set_bool(false);
+                rhs.set_bool(false);
             }else{              //not true nor false
                 throw json_exception{"at: BOOLEAN_PARSER input: obj read is neither true or false " + s};
             }
@@ -858,14 +633,14 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         return lhs;
     }
 
-    std::istream& NUMBER_PARSER(std::istream& lhs, json& element){
+    std::istream& NUMBER_PARSER(std::istream& lhs, json& rhs){
         double num;
         lhs >> num;
-        element.set_number(num);        //of course does not read eventual , } ]
+        rhs.set_number(num);        //of course does not read eventual , } ]
         return lhs;
     }
 
-    std::istream& NULL_PARSER(std::istream& lhs, json& element){
+    std::istream& NULL_PARSER(std::istream& lhs, json& rhs){
         std::string s;
         char c;
         char peek = lhs.peek();
@@ -875,20 +650,20 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
             peek = lhs.peek();
         }
         if(s == "null"){
-            element.set_null();
+            rhs.set_null();
         }else{
             throw json_exception{"at: NULL_PARSER input: obj read is not a null " + s};
         }
         return lhs;
     }
 
-    std::istream& STRING_PARSER(std::istream& lhs, json& element){
+    std::istream& STRING_PARSER(std::istream& lhs, json& rhs){
         std::string s;
         char c;
         lhs >> c;   //consumes '"'
         lhs.get(c);
         if(c == '"'){
-            element.set_string("");
+            rhs.set_string("");
             return lhs;
         }
         do{
@@ -901,7 +676,7 @@ std::istream& DICT_PARSER(std::istream& lhs, json& rhs){
         }while(c != '"');
         
         
-        element.set_string(s);
+        rhs.set_string(s);
         return lhs;
     }
 
@@ -1029,3 +804,5 @@ std::string to_lower_case(std::string str){
 }
 
 
+
+#pragma clang diagnostic pop

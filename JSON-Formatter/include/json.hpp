@@ -1,10 +1,14 @@
 #include <iostream>
 #include <string>
 #include <limits>
-#include <assert.h>
+#include <cassert>
+#include <utility>
+#include <vector>
+#include <fstream>
 
-struct json_exception {
+struct json_exception : public std::exception{
 	std::string msg;
+    explicit json_exception(std::string str) : msg(std::move(str)) {}
 };
 
 class json {
@@ -17,51 +21,51 @@ public:
 	struct const_dictionary_iterator;
 	
 	json();
-	json(json const&);
-	json(json&&);
+	json(const json&);
+	json(json&&) noexcept ;
 	~json();
 	
 	json& operator=(json const&);
-	json& operator=(json&&);
+	json& operator=(json&&) noexcept ;
 
-	bool is_list() const;
-	bool is_dictionary() const;
-	bool is_string() const;
-	bool is_number() const;
-	bool is_bool() const;
-	bool is_null() const;
+	[[nodiscard]] bool is_list() const;
+	[[nodiscard]] bool is_dictionary() const;
+	[[nodiscard]] bool is_string() const;
+	[[nodiscard]] bool is_number() const;
+	[[nodiscard]] bool is_bool() const;
+	[[nodiscard]] bool is_null() const;
 
 	json const& operator[](std::string const&) const;
 	json& operator[](std::string const&);
 
 	list_iterator begin_list();
-	const_list_iterator begin_list() const;
+	[[nodiscard]] const_list_iterator begin_list() const;
 	list_iterator end_list();
-	const_list_iterator end_list() const;
+	[[nodiscard]] const_list_iterator end_list() const;
 
 	dictionary_iterator begin_dictionary();
-	const_dictionary_iterator begin_dictionary() const;
+	[[nodiscard]] const_dictionary_iterator begin_dictionary() const;
 	dictionary_iterator end_dictionary();
-	const_dictionary_iterator end_dictionary() const;
+	[[nodiscard]] const_dictionary_iterator end_dictionary() const;
 
 	double& get_number();
-	double const& get_number() const;
+	[[nodiscard]] double const& get_number() const;
 
 	bool& get_bool();
-	bool const& get_bool() const;
+	[[nodiscard]] bool const& get_bool() const;
 
 	std::string& get_string();
-	std::string const& get_string() const;
+	[[nodiscard]] std::string const& get_string() const;
 
-	void set_string(std::string const&);
+	void set_string(const std::string&);
 	void set_bool(bool);
 	void set_number(double);
 	void set_null();
 	void set_list();
 	void set_dictionary();
-	void push_front(json const&);
-	void push_back(json const&);
-	void insert(std::pair<std::string,json> const&);
+	void push_front(const json&);
+	void push_back(const json&);
+	void insert(const std::pair<std::string,json>&);
 
 private:
 		

@@ -17,7 +17,7 @@ int main(){
 
 
     }
-    catch(json_exception error){
+    catch(const json_exception& error){
         std::cout << std::endl << "-----------------------------------------"
                   << std::endl << error.msg << std::endl << "-----------------------------------------" << std::endl;
     }
