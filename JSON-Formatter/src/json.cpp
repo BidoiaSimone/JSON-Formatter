@@ -7,6 +7,13 @@ static constexpr double inf = std::numeric_limits<double>::max();
 
 int layer = 0;
 
+/*
+ * TO DO:
+ * modificare tutta la semantica come spiegata da Spanò in PO
+ */
+
+
+
 #define DEFAULT 	"\033[0m"
 #define BLACK		"\033[0;30m"
 #define RED 		"\033[0;31m"		
